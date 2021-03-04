@@ -20,9 +20,17 @@ def db_get_sources():
     sources = [src for src in Source.select().order_by(Source.name).namedtuples()]
     return sources
 
+
 def db_get_source(id):
     source = Source.get_by_id(id)
     return source
+
+
+def db_delete_source(id):
+    source = Source.get_by_id(id)
+    deleted = source.delete_instance(recursive=True)
+    return deleted
+
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -46,6 +54,7 @@ def db_insert_source(data):
         last_updated=data["last_updated"],
         topics=data["topics"],
         origin=data["origin"],
+        status=data["status"]
     )
     if 'description' in data.keys():
         source_data.description = data['description']

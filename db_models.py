@@ -1,4 +1,4 @@
-from peewee import DateTimeField, ForeignKeyField, IntegerField, SqliteDatabase, Model, CharField, TextField, Check
+from peewee import BooleanField, DateTimeField, ForeignKeyField, IntegerField, SqliteDatabase, Model, CharField, TextField, Check
 from pydantic import BaseModel, constr, validator
 from datetime import datetime
 from typing import Optional
@@ -18,6 +18,7 @@ class Source(Model):
     origin = CharField(null=True)
     relevance = IntegerField(null=True)
     trust = IntegerField(null=True)
+    status = IntegerField()
 
     class Meta:
         database = db
@@ -34,6 +35,7 @@ class ValidatedSource(BaseModel):
     origin: constr(max_length=255)
     trust: Optional[int]
     relevance: Optional[int]
+    status: int
 
     class Config:
         orm_mode = True
@@ -78,4 +80,4 @@ class ValidatedArticle(BaseModel):
         orm_mode = True
 
 
-# db.create_tables([Source, Article])
+db.create_tables([Source, Article])

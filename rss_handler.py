@@ -62,8 +62,9 @@ def fetch_rss_feed(url):
         feed_data = {
             "valid_feed": True,
             "name": feed.feed.title,
-            "url": url,
+            "url": feed.href,
             "last_updated": datetime.fromtimestamp(mktime(feed.feed.updated_parsed)),
+            "status": feed.status
         }
 
         if 'subtitle' in feed.feed.keys() and len(feed.feed.subtitle) > 0:
@@ -82,4 +83,3 @@ def fetch_rss_feed(url):
 
 
 # guardian_source = fetch_rss_feed("http://www.buzzmachine.com/feed/")
-
