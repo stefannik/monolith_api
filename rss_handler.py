@@ -45,9 +45,9 @@ def fetch_rss_feed(url):
                 for img in content_html.findAll("img"):
                     images.append(img['src'])
             if 'tags' in entry.keys():
-                valid_entry['tags'] = [tag.term for tag in entry.tags]
+                valid_entry['tags'] = ", ".join([tag.term for tag in entry.tags])
             if len(images) > 0:
-                valid_entry['images'] = images
+                valid_entry['images'] = ", ".join(images)
 
             entries.append(valid_entry)
     
@@ -83,3 +83,8 @@ def fetch_rss_feed(url):
 
 
 # guardian_source = fetch_rss_feed("http://www.buzzmachine.com/feed/")
+
+
+# test = ['https://buzzmachine.com/wp-content/uploads/tea-party-640x416.jpg']
+# test_st = ", ".join(test)
+# test_ne = test_st.split(", ")

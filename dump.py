@@ -18,19 +18,19 @@ def insert_into_db(url: HttpUrl, origin: str, topics: str):
         return "Url already exists in DB"
 
 
-filename = "sources_dump.csv"
+# filename = "sources_dump.csv"
 
-with open(filename, 'r') as csvfile:
-    datareader = csv.reader(csvfile)
-    for row in datareader:
-        try:
-            print(row[0])
-            print(insert_into_db(row[0], "rss", row[1]))
-            print("------------------------------------------------------------------")
-        except:
-            print(row[0])
-            print("ERROR")
-            print("------------------------------------------------------------------")
+# with open(filename, 'r') as csvfile:
+#     datareader = csv.reader(csvfile)
+#     for row in datareader:
+#         try:
+#             print(row[0])
+#             print(insert_into_db(row[0], "rss", row[1]))
+#             print("------------------------------------------------------------------")
+#         except:
+#             print(row[0])
+#             print("ERROR")
+#             print("------------------------------------------------------------------")
 
 
 # print(insert_into_db("http://www.nytimes.com/services/xml/rss/nyt/MediaandAdvertising.xml", "rss", "media"))

@@ -1,11 +1,23 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import HttpUrl, validate_arguments
 from db_queries import *
 from rss_handler import fetch_rss_feed
 from funcs import sync_source_item
 
 
+# uvicorn main:api --reload
+
+
 api = FastAPI()
+
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @api.get("/")
 async def root():
@@ -13,8 +25,8 @@ async def root():
 
 
 # ARTICLES - Get all articles (sorted by date)
-@api.get("/articles")
-async def articles_get():
+@api.get("/articles/recommended")
+async def articles_recommended_get():
     articles = db_get_articles()
     return articles
 
@@ -24,6 +36,13 @@ async def articles_get():
 async def sources_get():
     sources = db_get_sources()
     return sources
+
+
+# SOURCES - Get all feeds (sorted by A-Z)
+@api.get("/sources/sync")
+async def sources_sync():
+    
+    return True
 
 
 # SOURCE GET - Get a feed and all its articles
@@ -141,5 +160,3 @@ async def source_delete(id: int):
 async def article_put():
     return {"message": "This is Monolith API v0.1"}
 
-
-# uvicorn main:api --reload

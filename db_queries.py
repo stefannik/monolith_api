@@ -11,13 +11,45 @@ def db_get_articles(**kwargs):
     # for art in source1.articles:
     #     print(art.title)
 
-    articles = [art for art in Article.select().order_by(Article.published.desc()).namedtuples()]
-    return articles
+    articles = [art for art in Article.select().order_by(Article.tags.desc())]
+    fixed = []
+    for art in articles[:10]:
+        obs = {
+            "source": art.source_id,
+            "title": art.title,
+            "url": art.url,
+            "published": art.published,
+            "summary_raw": art.summary_raw,
+            "summary": art.summary,
+            "content_raw": art.content_raw,
+            "content": art.content,
+            "tags": art.tags.split(", ") if art.tags is not None else art.tags,
+            "author": art.author,
+            "images": art.images.split(", ") if art.images is not None else art.images,
+            "type_of_article": art.type_of_article,
+            "impact": art.impact,
+        }
+        fixed.append(obs)
+    return fixed
 
 
 def db_get_sources():
     # Filter by: all, topic, update frequency, origin, target_audience
-    sources = [src for src in Source.select().order_by(Source.name).namedtuples()]
+    sources = {}
+    for src in Source.select().order_by(Source.id):
+        data = {
+            'id': src.id,
+            'name': src.name,
+            'url': src.url,
+            'last_updated': src.last_updated,
+            'description': src.description,
+            'logo': src.logo,
+            'topics': src.topics,
+            'target_audience': src.target_audience,
+            'relevance': src.relevance,
+            'trust': src.trust,
+        }
+        sources[src.id] = data
     return sources
 
 

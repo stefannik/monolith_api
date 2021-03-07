@@ -56,6 +56,7 @@ class Article(Model):
     author = CharField(null=True)
     images = TextField(null=True)
     type_of_article = CharField(null=True)
+    trustworthy = BooleanField(null=True)
     impact = IntegerField(index=True, null=True)
 
     class Meta:
@@ -74,10 +75,11 @@ class ValidatedArticle(BaseModel):
     author: Optional[constr(max_length=255)]
     images: Optional[str]
     type_of_article: Optional[constr(max_length=255)]
+    trustworthy: Optional[bool]
     impact: Optional[int]
 
     class Config:
         orm_mode = True
 
 
-db.create_tables([Source, Article])
+# db.create_tables([Source, Article])
