@@ -11,10 +11,11 @@ def db_get_articles(**kwargs):
     # for art in source1.articles:
     #     print(art.title)
 
-    articles = [art for art in Article.select().order_by(Article.tags.desc())]
+    articles = [art for art in Article.select().order_by(Article.published.desc())]
     fixed = []
     for art in articles[:10]:
         obs = {
+            "id": int(art.id),
             "source": art.source_id,
             "title": art.title,
             "url": art.url,
@@ -28,6 +29,7 @@ def db_get_articles(**kwargs):
             "images": art.images.split(", ") if art.images is not None else art.images,
             "type_of_article": art.type_of_article,
             "impact": art.impact,
+            "trustworthy": art.trustworthy
         }
         fixed.append(obs)
     return fixed
@@ -58,6 +60,14 @@ def db_get_source(id):
     return source
 
 
+def db_get_source_all(id):
+    source = Source.get_by_id(id)
+    base = source.__data__
+    arts = [art.__data__ for art in source.articles.order_by(Article.published.desc())]
+    base['articles'] = arts
+    return base
+
+
 def db_delete_source(id):
     source = Source.get_by_id(id)
     deleted = source.delete_instance(recursive=True)
@@ -68,6 +78,25 @@ def db_delete_source(id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ---------------------------production ready functions-------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_article_update_impact(id, score):
+    art = Article.get_by_id(id)
+    art.impact = score
+    art.save()
+    return True
+
+
+def db_article_update_type(id, score):
+    art = Article.get_by_id(id)
+    art.type_of_article = score
+    art.save()
+    return True
+
+
+def db_article_update_trustworthy(id, score):
+    art = Article.get_by_id(id)
+    art.trustworthy = score
+    art.save()
+    return True
 
 
 def db_source_exists(url):

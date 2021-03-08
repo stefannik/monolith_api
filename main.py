@@ -4,6 +4,7 @@ from pydantic import HttpUrl, validate_arguments
 from db_queries import *
 from rss_handler import fetch_rss_feed
 from funcs import sync_source_item
+from typing import Optional
 
 
 # uvicorn main:api --reload
@@ -48,11 +49,9 @@ async def sources_sync():
 # SOURCE GET - Get a feed and all its articles
 @api.get("/source/{id}")
 async def source_get(id: int):
-    source = db_get_source(id)
-    base = source.__data__
-    arts = [art.__data__ for art in source.articles]
-    base['articles'] = arts
-    return base
+    source = db_get_source_all(id)
+    return source
+
 
 
 # SOURCE SYNC - Update a feed and add new articles if necessary
@@ -113,12 +112,9 @@ async def source_put(id: int):
             "status": synced_status,
             "entries": new_entries
         }
-        source_from_db = db_get_source(id)
-        base = source_from_db.__data__
-        articles = [art.__data__ for art in source.articles]
-        base['articles'] = articles
+        source_from_db = db_get_source_all(id)
 
-        return {"updated": updated_parts, "source": base}
+        return {"updated": updated_parts, "source": source_from_db}
 
 
 # SOURCE UPDATE - Update basic info about the source
@@ -156,7 +152,23 @@ async def source_delete(id: int):
 
 
 # ARTICLE PUT - Update an article
-@api.put("/article")
-async def article_put():
-    return {"message": "This is Monolith API v0.1"}
+@api.put("/article/{id}")
+async def article_put(id: int, impact: Optional[int] = None, type_of_article: Optional[str] = None, trustworthy: Optional[bool] = None):
+    print(impact)
+    if impact:
+        try:
+            updated = db_article_update_impact(id, impact)
+        except:
+            raise HTTPException(status_code=412, detail="Update not possible")
+    if type_of_article:
+        try:
+            updated = db_article_update_type(id, type_of_article)
+        except:
+            raise HTTPException(status_code=412, detail="Update not possible")
+    if trustworthy != None:
+        try:
+            updated = db_article_update_trustworthy(id, trustworthy)
+        except:
+            raise HTTPException(status_code=412, detail="Update not possible")
+    return {"Score updated": True}
 
