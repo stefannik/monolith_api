@@ -1,5 +1,6 @@
 from db_models import db, Source, ValidatedSource, Article, ValidatedArticle
 from pydantic import ValidationError
+import numpy as np
 
 
 def db_get_articles(**kwargs):
@@ -37,7 +38,12 @@ def db_get_articles(**kwargs):
 
 def db_get_sources():
     # Filter by: all, topic, update frequency, origin, target_audience
-    sources = {}
+    sources = {
+        'data': {},
+    }
+    templist = np.array([w.topics for w in Source.select()])
+    sources['topics'] = list(np.unique(templist))
+
     for src in Source.select().order_by(Source.id):
         data = {
             'id': src.id,
@@ -51,7 +57,7 @@ def db_get_sources():
             'relevance': src.relevance,
             'trust': src.trust,
         }
-        sources[src.id] = data
+        sources['data'][src.id] = data
     return sources
 
 
