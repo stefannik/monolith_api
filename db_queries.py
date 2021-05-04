@@ -1,43 +1,38 @@
-from db_models import db, Source, ValidatedSource, Article, ValidatedArticle
+import enum
+from db_models import SourceTopic, ArticleTopic, db, Source, ValidatedSource, Article, ValidatedArticle, Topic, ValidatedTopic
 from pydantic import ValidationError
+from datetime import datetime
 import numpy as np
 
 
-def db_get_articles(**kwargs):
-    # Filter by: all, source, tag, type_of_article
-    # Sort by: published, impact
-
-    # Filter by Source
-    # source1 = Source.get(Source.id == 1)
-    # for art in source1.articles:
-    #     print(art.title)
-
-    articles = [art for art in Article.select().order_by(Article.published.desc())]
-    fixed = []
-    for art in articles[:10]:
-        obs = {
-            "id": int(art.id),
-            "source": art.source_id,
-            "title": art.title,
-            "url": art.url,
-            "published": art.published,
-            "summary_raw": art.summary_raw,
-            "summary": art.summary,
-            "content_raw": art.content_raw,
-            "content": art.content,
-            "tags": art.tags.split(", ") if art.tags is not None else art.tags,
-            "author": art.author,
-            "images": art.images.split(", ") if art.images is not None else art.images,
-            "type_of_article": art.type_of_article,
-            "impact": art.impact,
-            "trustworthy": art.trustworthy
-        }
-        fixed.append(obs)
-    return fixed
+def transform_article(art):
+    article = {
+        "id": int(art.id),
+        "source": art.source_id,
+        "title": art.title,
+        "url": art.url,
+        "published": art.published,
+        "summary_raw": art.summary_raw,
+        "summary": art.summary,
+        "content_raw": art.content_raw,
+        "content": art.content,
+        "tags": art.tags.split(", ") if art.tags is not None else art.tags,
+        "author": art.author,
+        "images": art.images.split(", ") if art.images is not None else art.images,
+        "type_of_article": art.type_of_article,
+        "sense": art.sense,
+        "portada": art.portada,
+        "mono": art.mono
+    }
+    return article
 
 
-def db_get_sources():
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# SOURCE TABLE
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_source_select_all():
     # Filter by: all, topic, update frequency, origin, target_audience
+    # Select Topics
     sources = {
         'data': {},
     }
@@ -52,7 +47,6 @@ def db_get_sources():
             'last_updated': src.last_updated,
             'description': src.description,
             'logo': src.logo,
-            'topics': src.topics,
             'target_audience': src.target_audience,
             'relevance': src.relevance,
             'trust': src.trust,
@@ -61,48 +55,188 @@ def db_get_sources():
     return sources
 
 
-def db_get_source(id):
-    source = Source.get_by_id(id)
-    return source
+def db_source_select(source_id):
+    source = Source.get_by_id(source_id)
+    return source.__data__
 
 
-def db_get_source_all(id):
-    source = Source.get_by_id(id)
-    base = source.__data__
-    arts = [art.__data__ for art in source.articles.order_by(Article.published.desc())]
-    base['articles'] = arts
-    return base
+def db_source_update(source_id, **fields):
+    query = Source.update(fields).where(Article.id == source_id)
+    query.execute()
+    return 0
 
 
-def db_delete_source(id):
+def db_source_insert(name, url, last_updated, origin, **kwargs):
+    return name
+
+
+def db_source_delete(source_id):
     source = Source.get_by_id(id)
     deleted = source.delete_instance(recursive=True)
     return deleted
 
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ARTICLE TABLE
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_article_select_list(list_of_article_ids):
+    return []
+
+
+def db_article_select_list_by_source(source_id):
+    # sort & filter
+    query = Article.select().where(Article.source == source_id).order_by(Article.published.desc())
+    return [transform_article(art) for art in query]
+
+
+def db_article_select(article_id):
+    article = Article.get_by_id(article_id)
+    return article.__data__
+
+
+def db_article_update(article_id, **fields):
+    query = Article.update(fields).where(Article.id == article_id)
+    query.execute()
+    return True
+
+
+def db_article_insert(source_id, title, url, published, **kwargs):
+    article_id = 0
+    return article_id
+
+
+def db_article_delete(article_id):
+    return article_id
+
+
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# ---------------------------production ready functions-------------------------------
+# TOPIC TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def db_article_update_impact(id, score):
-    art = Article.get_by_id(id)
-    art.impact = score
-    art.save()
-    return True
+def db_topic_select_all():
+    return []
 
 
-def db_article_update_type(id, score):
-    art = Article.get_by_id(id)
-    art.type_of_article = score
-    art.save()
-    return True
+def db_topic_select_list(topic_ids):
+    return []
 
 
-def db_article_update_trustworthy(id, score):
-    art = Article.get_by_id(id)
-    art.trustworthy = score
-    art.save()
-    return True
+def db_topic_select(topic_id):
+    return topic_id
+
+
+def db_topic_insert(name, description):
+    # check if name exists
+    # insert
+    topic_id = 0
+    return topic_id
+
+
+def db_topic_delete(topic_id):
+    return topic_id
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# SOURCE-TOPIC TABLE
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_sourcetopic_select_topics(source_id):
+    topics_ids = []
+    return topics_ids
+
+
+def db_sourcetopic_select_sources(topic_id):
+    source_ids = []
+    return source_ids
+
+
+def db_sourcetopic_insert(source_id, topic_id):
+    return source_id, topic_id
+    
+
+def db_sourcetopic_delete(source_id, topic_id):
+    return source_id, topic_id
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ARTICLE-TOPIC TABLE
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_articletopic_select_topics(article_id):
+    topics_ids = []
+    return topics_ids
+
+
+def db_articletopic_select_sources(topic_id):
+    article_ids = []
+    return article_ids
+
+
+def db_articletopic_insert(article_id, topic_id):
+    return article_id, topic_id
+    
+
+def db_articletopic_delete(article_id, topic_id):
+    return article_id, topic_id
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# COMBOS
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+def db_source_select_full(source_id):
+    source = db_source_select(source_id)
+    source['topics'] = db_sourcetopic_select_topics(source_id)
+    source['articles'] = db_article_select_list_by_source(source_id)
+    return source
+
+
+
+
+
+
+
+
+
+
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+def db_get_articles(**kwargs):
+    # Filter by: all, source, tag, type_of_article
+    # Sort by: published, impact
+
+    # Filter by Source
+    # source1 = Source.get(Source.id == 1)
+    # for art in source1.articles:
+    #     print(art.title)
+    query = Article.select().where(Article.published > datetime(2021, 4, 8)).order_by(Article.mono.desc())
+    # query = Article.select().order_by(Article.mono.desc())
+    articles = [art for art in query]
+    fixed = []
+    for art in articles[:50]:
+        obs = {
+            "id": int(art.id),
+            "source": art.source_id,
+            "title": art.title,
+            "url": art.url,
+            "published": art.published,
+            "summary_raw": art.summary_raw,
+            "summary": art.summary,
+            "content_raw": art.content_raw,
+            "content": art.content,
+            "tags": art.tags.split(", ") if art.tags is not None else art.tags,
+            "author": art.author,
+            "images": art.images.split(", ") if art.images is not None else art.images,
+            "type_of_article": art.type_of_article,
+            "sense": art.sense,
+            "portada": art.portada,
+            "mono": art.mono
+        }
+        fixed.append(obs)
+    return fixed
+
 
 
 def db_source_exists(url):
@@ -155,3 +289,66 @@ def db_insert_source(data):
     except ValidationError as e:
         return e
 
+
+def db_insert_topic(fields):
+    # Create Source object to be inserted
+    topic_fields = Topic(
+        name=fields["name"],
+    )
+    if 'description' in fields.keys():
+        topic_fields.description = fields['description']
+    
+    # Validate the object and insert into db
+    try:
+        print('here')
+        ValidatedTopic.from_orm(topic_fields)
+        topic_fields.save()
+
+        return {"topic_id": topic_fields.id}
+    
+    except ValidationError as e:
+        return e
+
+
+def db_insert_sourcetopic_pair(source_id, topic_id):
+    # Create Source object to be inserted
+    source = Source.get(Source.id == source_id)
+    topic = Topic.get(Topic.id == topic_id)
+
+    try:
+        SourceTopic.create(source=source, topic=topic)
+
+        return {"source_topic_pair_added": True}
+    
+    except ValidationError as e:
+        return e
+
+
+def db_get_topic_sources(topic_id):
+    query = SourceTopic.select().where(SourceTopic.topic_id == topic_id)
+    pairs = [art.source_id for art in query]
+    return pairs
+
+
+def db_get_source_topics(source_id):
+    query = SourceTopic.select().where(SourceTopic.source_id == source_id)
+    pairs = [art.topic_id for art in query]
+    return pairs
+
+
+def db_delete_source_topics(source_id, topic_id):
+    SourceTopic.delete().where(SourceTopic.source_id == source_id).where(SourceTopic.topic_id == topic_id).execute()
+    return {"source_topic_pair_deleted": [source_id, topic_id]}
+
+
+
+def db_get_topic_articles(topic_id):
+    query = ArticleTopic.select().where(ArticleTopic.topic_id == topic_id)
+    pairs = [art.source_id for art in query]
+    return pairs
+
+
+def db_get_article_topics(source_id):
+    query = ArticleTopic.select().where(ArticleTopic.source_id == source_id)
+    pairs = [art.topic_id for art in query]
+    return pairs

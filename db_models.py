@@ -1,4 +1,4 @@
-from peewee import BooleanField, DateTimeField, ForeignKeyField, IntegerField, SqliteDatabase, Model, CharField, TextField, Check
+from peewee import BooleanField, DateTimeField, ForeignKeyField, DecimalField, IntegerField, SqliteDatabase, Model, CharField, TextField, CompositeKey
 from pydantic import BaseModel, constr, validator
 from datetime import datetime
 from typing import Optional
@@ -56,8 +56,9 @@ class Article(Model):
     author = CharField(null=True)
     images = TextField(null=True)
     type_of_article = CharField(null=True)
-    trustworthy = BooleanField(null=True)
-    impact = IntegerField(index=True, null=True)
+    sense = DecimalField(null=True)
+    portada = DecimalField(index=True, null=True)
+    mono = DecimalField(index=True, null=True)
 
     class Meta:
         database = db
@@ -75,11 +76,47 @@ class ValidatedArticle(BaseModel):
     author: Optional[constr(max_length=255)]
     images: Optional[str]
     type_of_article: Optional[constr(max_length=255)]
-    trustworthy: Optional[bool]
-    impact: Optional[int]
+    sense: Optional[float]
+    portada: Optional[float]
+    mono: Optional[float]
 
     class Config:
         orm_mode = True
 
 
-# db.create_tables([Source, Article])
+class Topic(Model):
+    # No need for ID field, peewee adds one automatically as a primary key autoincrement
+    name = TextField(index=True)
+    description = TextField(index=False, null=True)
+
+    class Meta:
+        database = db
+
+
+class ValidatedTopic(BaseModel):
+    name: str
+    description: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+
+class SourceTopic(Model):  # Many-to-many relationship.
+    source = ForeignKeyField(Source)
+    topic = ForeignKeyField(Topic)
+
+    class Meta:
+        database = db
+        primary_key = CompositeKey('source', 'topic')
+
+
+class ArticleTopic(Model):  # Many-to-many relationship.
+    article = ForeignKeyField(Article)
+    topic = ForeignKeyField(Topic)
+
+    class Meta:
+        database = db
+        primary_key = CompositeKey('article', 'topic')
+
+
+# db.create_tables([Source, Article, Topic, SourceTopic, ArticleTopic])

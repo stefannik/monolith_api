@@ -18,7 +18,7 @@ def insert_into_db(url: HttpUrl, origin: str, topics: str):
         return "Url already exists in DB"
 
 
-# filename = "sources_dump.csv"
+# filename = "sources_dump2.csv"
 
 # with open(filename, 'r') as csvfile:
 #     datareader = csv.reader(csvfile)
@@ -35,3 +35,17 @@ def insert_into_db(url: HttpUrl, origin: str, topics: str):
 
 # print(insert_into_db("http://www.nytimes.com/services/xml/rss/nyt/MediaandAdvertising.xml", "rss", "media"))
 
+# topics = ['Trending', 'US Politics', 'Business', 'Sports', 'Technology', 'Advertising', 'Automotive', 'Biopharma', 'Cibersecurity', 'Energy', 'Food', 'Healthcare', 'Media', 'Entertainment', 'Real Estate', 'Retail', 'Travel', 'Machine Learning', 'Artificial Intelligence', 'Internet of Things', 'Entrepreneurship', 'Economics', 'Programming', 'SEO', 'Management', 'Photography', 'Data Science', 'Marketing', 'Gaming', 'Culture', 'Music', 'Comics', 'Dating', 'Crafts', 'Art', 'Design', 'Web Design', 'Books', 'Cooking', 'Education', 'Environment', 'Family', 'Fashion', 'Feminism', 'Fiction', 'Film', 'Health', 'History', 'Humor', 'LGBTQ', 'Lifestyle', 'Longreads', 'Mathematics', 'Mental Health', 'Military', 'Motherhood', 'Nature', 'Parenting', 'Religion', 'Science', 'Space', 'Football', 'Basketball', 'Motorsports', 'eSports', 'Tennis', 'Cryptocurrency']
+
+# for topic in topics:
+#     test = db_insert_topic({'name': topic})
+#     print(test)
+
+
+# print(db_insert_sourcetopic_pair(11, 65))
+# print(db_insert_sourcetopic_pair(16, 65))
+# print(db_insert_sourcetopic_pair(28, 65))
+
+# print(db_get_topic_sources(61))
+# print(db_get_source_topics(22))
+# print(db_delete_source_topics(23, 61))

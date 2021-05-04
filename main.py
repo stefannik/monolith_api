@@ -25,6 +25,15 @@ async def root():
     return {"message": "This is Monolith API v0.1"}
 
 
+@api.get("/test")
+async def test():
+    sources = db_article_update(1, type_of_article="report")
+    return sources
+
+
+
+
+
 # ARTICLES - Get all articles (sorted by date)
 @api.get("/articles/recommended")
 async def articles_recommended_get():
@@ -35,7 +44,7 @@ async def articles_recommended_get():
 # SOURCES - Get all feeds (sorted by A-Z)
 @api.get("/sources")
 async def sources_get():
-    sources = db_get_sources()
+    sources = db_source_select_all()
     return sources
 
 
