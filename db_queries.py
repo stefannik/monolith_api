@@ -61,17 +61,19 @@ def db_source_select(source_id):
 
 
 def db_source_update(source_id, **fields):
-    query = Source.update(fields).where(Article.id == source_id)
+    query = Source.update(fields).where(Source.id == source_id)
     query.execute()
     return 0
 
 
-def db_source_insert(name, url, last_updated, origin, **kwargs):
-    return name
+def db_source_insert(**fields):
+    # required fields: name, url, last_updated, status
+    insert_source = Source.insert(fields).execute()
+    return insert_source
 
 
 def db_source_delete(source_id):
-    source = Source.get_by_id(id)
+    source = Source.get_by_id(source_id)
     deleted = source.delete_instance(recursive=True)
     return deleted
 
@@ -183,11 +185,19 @@ def db_articletopic_delete(article_id, topic_id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-def db_source_select_full(source_id):
+def db_select_source_alldata(source_id):
     source = db_source_select(source_id)
     source['topics'] = db_sourcetopic_select_topics(source_id)
     source['articles'] = db_article_select_list_by_source(source_id)
     return source
+
+
+def db_insert_rss_source():
+    # insert source
+    # insert new topic (if not in table Topics)
+    # insert source-topic relationships
+    # insert articles
+    return True
 
 
 

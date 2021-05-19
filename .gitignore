@@ -1,5 +1,7 @@
 **/env
 **/.vscode
 **/__pycache__
-*test.db
+test.db
 *test.py
+*requierements.txt
+**/.DS_store

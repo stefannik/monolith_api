@@ -11,13 +11,9 @@ class Source(Model):
     name = CharField(index=True, unique=True)
     url = TextField(index=True, unique=True)
     last_updated = DateTimeField(index=True)
-    topics = CharField()
-    target_audience = CharField(null=True)
     description = TextField(null=True)
     logo = TextField(null=True)
     origin = CharField(null=True)
-    relevance = IntegerField(null=True)
-    trust = IntegerField(null=True)
     status = IntegerField()
 
     class Meta:
@@ -28,13 +24,10 @@ class ValidatedSource(BaseModel):
     name: constr(max_length=255)
     url: str
     last_updated: datetime
-    topics: str
     target_audience: Optional[constr(max_length=255)]
     description: Optional[str]
     logo: Optional[str]
     origin: constr(max_length=255)
-    trust: Optional[int]
-    relevance: Optional[int]
     status: int
 
     class Config:

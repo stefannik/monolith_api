@@ -27,7 +27,15 @@ async def root():
 
 @api.get("/test")
 async def test():
-    sources = db_article_update(1, type_of_article="report")
+    # sources = db_article_update(1, type_of_article="report")
+    # sources = db_source_update(1)
+    test = {
+        'name': "Test Source Name",
+        'url': "https://www.google.com",
+        'last_updated': "2021-04-09 23:22:39",
+        'status': 301
+    }
+    sources = db_source_delete(66)
     return sources
 
 
