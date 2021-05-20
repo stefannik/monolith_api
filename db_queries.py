@@ -5,37 +5,11 @@ from datetime import datetime
 import numpy as np
 
 
-def transform_article(art):
-    article = {
-        "id": int(art.id),
-        "source": art.source_id,
-        "title": art.title,
-        "url": art.url,
-        "published": art.published,
-        "summary_raw": art.summary_raw,
-        "summary": art.summary,
-        "content_raw": art.content_raw,
-        "content": art.content,
-        "tags": art.tags.split(", ") if art.tags is not None else art.tags,
-        "author": art.author,
-        "images": art.images.split(", ") if art.images is not None else art.images,
-        "type_of_article": art.type_of_article,
-        "sense": art.sense,
-        "portada": art.portada,
-        "mono": art.mono
-    }
-    return article
-
-
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def db_source_select_all():
-    # Filter by: all, topic, update frequency, origin, target_audience
-    # Select Topics
-    sources = {
-        'data': {},
-    }
+    sources = {'data': {}}
     templist = np.array([w.topics for w in Source.select()])
     sources['topics'] = list(np.unique(templist))
 
@@ -47,9 +21,6 @@ def db_source_select_all():
             'last_updated': src.last_updated,
             'description': src.description,
             'logo': src.logo,
-            'target_audience': src.target_audience,
-            'relevance': src.relevance,
-            'trust': src.trust,
         }
         sources['data'][src.id] = data
     return sources
@@ -82,13 +53,19 @@ def db_source_delete(source_id):
 # ARTICLE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def db_article_select_list(list_of_article_ids):
-    return []
+    articles = []
+    for art_id in list_of_article_ids:
+        query = Article.get_by_id(art_id)
+        articles.append(query.__data__)
+    return articles
 
 
 def db_article_select_list_by_source(source_id):
-    # sort & filter
-    query = Article.select().where(Article.source == source_id).order_by(Article.published.desc())
-    return [transform_article(art) for art in query]
+    # sort & filter, add topics field
+    # query = Article.select().where(Article.source == source_id).order_by(Article.published.desc())
+    # return [transform_article(art) for art in query]
+    source_articles = Source.get_by_id(source_id).articles
+    return [article.__data__ for article in source_articles]
 
 
 def db_article_select(article_id):
@@ -102,14 +79,25 @@ def db_article_update(article_id, **fields):
     return True
 
 
-def db_article_insert(source_id, title, url, published, **kwargs):
-    article_id = 0
-    return article_id
+def db_article_insert(**fields):
+    # required fields: source_id, url, published, title
+    insert_article = Article.insert(fields).execute()
+    return insert_article
+
+
+def db_article_bulk_insert(list_of_articles):
+    inserted_articles = []
+    with db.atomic():
+        for article_data in list_of_articles:
+            article_id = Article.create(**article_data)
+            inserted_articles.append(article_id.__data__)
+    return inserted_articles
 
 
 def db_article_delete(article_id):
-    return article_id
-
+    article = Article.get_by_id(article_id)
+    deleted = article.delete_instance(recursive=True)
+    return deleted
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

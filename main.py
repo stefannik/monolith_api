@@ -29,13 +29,28 @@ async def root():
 async def test():
     # sources = db_article_update(1, type_of_article="report")
     # sources = db_source_update(1)
-    test = {
-        'name': "Test Source Name",
-        'url': "https://www.google.com",
-        'last_updated': "2021-04-09 23:22:39",
-        'status': 301
-    }
-    sources = db_source_delete(66)
+    # test = {
+    #     'source': 1,
+    #     'title': "UFOs are coming for all of us",
+    #     'url': "https://www.google.com",
+    #     'published': "2021-04-09 23:22:39",
+    # }
+    # sources = db_article_insert(**test)
+    test = [
+        {
+            'source': 1,
+            'title': "UFO Test 1",
+            'url': "https://www.google.com/ufo1",
+            'published': "2021-04-09 23:22:39",
+        },
+        {
+            'source': 1,
+            'title': "UFO test 2",
+            'url': "https://www.google.com/ufo2",
+            'published': "2021-04-09 23:22:39",
+        },
+    ]
+    sources = db_article_delete(1371)
     return sources
 
 
