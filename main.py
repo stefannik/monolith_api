@@ -20,64 +20,82 @@ api.add_middleware(
     allow_headers=["*"],
 )
 
+
 @api.get("/")
 async def root():
-    return {"message": "This is Monolith API v0.1"}
+    return {"message": "This is Monolith API v0.1.8"}
 
 
 @api.get("/test")
 async def test():
-    # sources = db_article_update(1, type_of_article="report")
-    # sources = db_source_update(1)
-    # test = {
-    #     'source': 1,
-    #     'title': "UFOs are coming for all of us",
-    #     'url': "https://www.google.com",
-    #     'published': "2021-04-09 23:22:39",
-    # }
-    # sources = db_article_insert(**test)
-    test = {
-            'name': "Test bla",
-            'url': "https://www.google.com/ufo2",
-            'last_updated': "2021-04-09 23:22:39",
-            'status': 301
-        }
-    
     sources = db_select_source_alldata(32)
     return sources
 
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# FEEDS
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 
-# ARTICLES - Get all articles (sorted by date)
-@api.get("/articles/recommended")
-async def articles_recommended_get():
-    articles = db_get_articles()
-    return articles
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# REFERENCES
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+@api.get("/references/sources")
+async def references_sources(featured: Optional[bool] = False):
+    if featured:
+        sources = db_source_select_all()
+        return []
+    else:
+        sources = db_source_select_all()
+        return sources
 
 
-# SOURCES - Get all feeds (sorted by A-Z)
-@api.get("/sources")
-async def sources_get():
-    sources = db_source_select_all()
-    return sources
+@api.get("/references/collections")
+async def references_collections(featured: Optional[bool] = False):
+    if featured:
+        return []
+    else:
+        collections = []
+        topic_ids_with_sources = [s.topic_id for s in SourceTopic.select()]
+        topic_ids = set(topic_ids_with_sources)
+        for topic_id in topic_ids:
+            topic = db_topic_select(topic_id)
+            topic['sources'] = db_sourcetopic_select_topic_sources(topic_id)
+            collections.append(topic)
+        return collections
 
 
-# SOURCES - Get all feeds (sorted by A-Z)
-@api.get("/sources/sync")
-async def sources_sync():
-    
-    return True
+@api.get("/references/tags")
+async def references_tags(featured: Optional[bool] = False):
+    if featured:
+        return []
+    else:
+        tags = []
+        topic_ids_with_sources = [s.topic_id for s in ArticleTopic.select()]
+        topic_ids = set(topic_ids_with_sources)
+        for topic_id in topic_ids:
+            topic = db_topic_select(topic_id)
+            tags.append(topic)
+        return tags
 
 
-# SOURCE GET - Get a feed and all its articles
-@api.get("/source/{id}")
-async def source_get(id: int):
-    source = db_get_source_all(id)
-    return source
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# SEARCH
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# CONTENT
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # SOURCE SYNC - Update a feed and add new articles if necessary
 @api.put("/source/sync/{id}")

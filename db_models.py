@@ -96,7 +96,7 @@ class ValidatedTopic(BaseModel):
 
 class SourceTopic(Model):  # Many-to-many relationship.
     source = ForeignKeyField(Source, backref='topics')
-    topic = ForeignKeyField(Topic)
+    topic = ForeignKeyField(Topic, backref="sources")
 
     class Meta:
         database = db

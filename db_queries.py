@@ -9,24 +9,6 @@ import numpy as np
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def db_source_select_all():
-    sources = {'data': {}}
-    templist = np.array([w.topics for w in Source.select()])
-    sources['topics'] = list(np.unique(templist))
-
-    for src in Source.select().order_by(Source.id):
-        data = {
-            'id': src.id,
-            'name': src.name,
-            'url': src.url,
-            'last_updated': src.last_updated,
-            'description': src.description,
-            'logo': src.logo,
-        }
-        sources['data'][src.id] = data
-    return sources
-
-
 def db_source_select_list(list_of_source_ids):
     sources = []
     for source_id in list_of_source_ids:
@@ -199,6 +181,21 @@ def db_articletopic_delete(article_id, topic_id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # COMBOS
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_source_select_all():
+    sources = []
+    for source in Source.select():
+        data = source.__data__
+
+        topics = []
+        for topic_id in [t.topic_id for t in source.topics]:
+            query = Topic.get_by_id(topic_id)
+            topics.append(query.__data__)
+        
+        data['topics'] = topics
+        
+        sources.append(data)
+
+    return sources
 
 
 def db_select_source_alldata(source_id):
