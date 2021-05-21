@@ -1,6 +1,7 @@
 import enum
 from db_models import SourceTopic, ArticleTopic, db, Source, ValidatedSource, Article, ValidatedArticle, Topic, ValidatedTopic
 from pydantic import ValidationError
+from peewee import IntegrityError
 from datetime import datetime
 import numpy as np
 
@@ -23,6 +24,14 @@ def db_source_select_all():
             'logo': src.logo,
         }
         sources['data'][src.id] = data
+    return sources
+
+
+def db_source_select_list(list_of_source_ids):
+    sources = []
+    for source_id in list_of_source_ids:
+        query = Source.get_by_id(source_id)
+        sources.append(query.__data__)
     return sources
 
 
@@ -104,68 +113,87 @@ def db_article_delete(article_id):
 # TOPIC TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def db_topic_select_all():
-    return []
+    topics = Topic.select().order_by(Topic.name)
+    return [t.__data__ for t in topics]
 
 
-def db_topic_select_list(topic_ids):
-    return []
+def db_topic_select_list(list_of_topic_ids):
+    topics = []
+    for topic_id in list_of_topic_ids:
+        query = Topic.get_by_id(topic_id)
+        topics.append(query.__data__)
+    return topics
 
 
 def db_topic_select(topic_id):
-    return topic_id
+    topic = Topic.get_by_id(topic_id)
+    return topic.__data__
 
 
-def db_topic_insert(name, description):
-    # check if name exists
-    # insert
-    topic_id = 0
-    return topic_id
+def db_topic_insert(**fields):
+    try:
+        insert_topic = Topic.insert(fields).execute()
+        return insert_topic
+    except IntegrityError:
+        return {"ERROR": "The required values were not provided."}
 
 
 def db_topic_delete(topic_id):
-    return topic_id
+    topic = Topic.get_by_id(topic_id)
+    deleted = topic.delete_instance(recursive=True)
+    return deleted
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE-TOPIC TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def db_sourcetopic_select_topics(source_id):
-    topics_ids = []
-    return topics_ids
+def db_sourcetopic_select_source_topics(source_id):
+    source_topics = SourceTopic.select().where(SourceTopic.source_id == source_id)
+    source_topics_ids = [t.topic_id for t in source_topics]
+    return db_topic_select_list(source_topics_ids)
 
 
-def db_sourcetopic_select_sources(topic_id):
-    source_ids = []
-    return source_ids
+def db_sourcetopic_select_topic_sources(topic_id):
+    topic_sources = SourceTopic.select().where(SourceTopic.topic_id == topic_id)
+    source_sources_ids = [s.source_id for s in topic_sources]
+    return db_source_select_list(source_sources_ids)
 
 
 def db_sourcetopic_insert(source_id, topic_id):
+    SourceTopic.create(source=source_id, topic=topic_id)
     return source_id, topic_id
     
 
 def db_sourcetopic_delete(source_id, topic_id):
-    return source_id, topic_id
+    pair = SourceTopic.get(SourceTopic.source_id == source_id, SourceTopic.topic_id == topic_id)
+    deleted = pair.delete_instance()
+    return deleted
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ARTICLE-TOPIC TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def db_articletopic_select_topics(article_id):
-    topics_ids = []
-    return topics_ids
+def db_articletopic_select_article_topics(article_id):
+    article_topics = ArticleTopic.select().where(ArticleTopic.article_id == article_id)
+    article_topics_ids = [t.topic_id for t in article_topics]
+    return db_topic_select_list(article_topics_ids)
 
 
-def db_articletopic_select_sources(topic_id):
-    article_ids = []
-    return article_ids
+def db_articletopic_select_topic_articles(topic_id):
+    topic_articles = ArticleTopic.select().where(ArticleTopic.topic_id == topic_id)
+    topic_article_ids = [t.article_id for t in topic_articles]
+    return db_article_select_list(topic_article_ids)
 
 
 def db_articletopic_insert(article_id, topic_id):
+    ArticleTopic.create(article=article_id, topic=topic_id)
     return article_id, topic_id
     
 
 def db_articletopic_delete(article_id, topic_id):
-    return article_id, topic_id
+    pair = ArticleTopic.get(ArticleTopic.article_id == article_id, ArticleTopic.topic_id == topic_id)
+    deleted = pair.delete_instance()
+    return deleted
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -175,7 +203,7 @@ def db_articletopic_delete(article_id, topic_id):
 
 def db_select_source_alldata(source_id):
     source = db_source_select(source_id)
-    source['topics'] = db_sourcetopic_select_topics(source_id)
+    source['topics'] = db_sourcetopic_select_source_topics(source_id)
     source['articles'] = db_article_select_list_by_source(source_id)
     return source
 
@@ -187,166 +215,3 @@ def db_insert_rss_source():
     # insert articles
     return True
 
-
-
-
-
-
-
-
-
-
-
-
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-def db_get_articles(**kwargs):
-    # Filter by: all, source, tag, type_of_article
-    # Sort by: published, impact
-
-    # Filter by Source
-    # source1 = Source.get(Source.id == 1)
-    # for art in source1.articles:
-    #     print(art.title)
-    query = Article.select().where(Article.published > datetime(2021, 4, 8)).order_by(Article.mono.desc())
-    # query = Article.select().order_by(Article.mono.desc())
-    articles = [art for art in query]
-    fixed = []
-    for art in articles[:50]:
-        obs = {
-            "id": int(art.id),
-            "source": art.source_id,
-            "title": art.title,
-            "url": art.url,
-            "published": art.published,
-            "summary_raw": art.summary_raw,
-            "summary": art.summary,
-            "content_raw": art.content_raw,
-            "content": art.content,
-            "tags": art.tags.split(", ") if art.tags is not None else art.tags,
-            "author": art.author,
-            "images": art.images.split(", ") if art.images is not None else art.images,
-            "type_of_article": art.type_of_article,
-            "sense": art.sense,
-            "portada": art.portada,
-            "mono": art.mono
-        }
-        fixed.append(obs)
-    return fixed
-
-
-
-def db_source_exists(url):
-    try: 
-        Source.get(Source.url == url)
-        return True
-    except:
-        return False
-
-
-def db_insert_source(data):
-    # Create Source object to be inserted
-    source_data = Source(
-        name=data["name"],
-        url=data["url"],
-        last_updated=data["last_updated"],
-        topics=data["topics"],
-        origin=data["origin"],
-        status=data["status"]
-    )
-    if 'description' in data.keys():
-        source_data.description = data['description']
-    if 'logo' in data.keys():
-        source_data.logo = data['logo']
-    
-    # Validate the object and insert into db
-    try:
-        ValidatedSource.from_orm(source_data)
-        source_data.save()
-
-        # Format, validate articles
-        with db.atomic():
-            for entry in data['entries']:
-                article_data = entry
-                article_data['source'] = source_data.id
-                if 'tags' in article_data.keys():
-                    article_data['tags'] = str(article_data['tags'])
-                if 'images' in article_data.keys():
-                    article_data['images'] = str(article_data['images'])
-
-                try:
-                    temp_article = Article(**article_data)
-                    ValidatedArticle.from_orm(temp_article)
-                    Article.create(**article_data)
-                except ValidationError as e:
-                    return e
-
-        return {"source_id": source_data.id}
-    
-    except ValidationError as e:
-        return e
-
-
-def db_insert_topic(fields):
-    # Create Source object to be inserted
-    topic_fields = Topic(
-        name=fields["name"],
-    )
-    if 'description' in fields.keys():
-        topic_fields.description = fields['description']
-    
-    # Validate the object and insert into db
-    try:
-        print('here')
-        ValidatedTopic.from_orm(topic_fields)
-        topic_fields.save()
-
-        return {"topic_id": topic_fields.id}
-    
-    except ValidationError as e:
-        return e
-
-
-def db_insert_sourcetopic_pair(source_id, topic_id):
-    # Create Source object to be inserted
-    source = Source.get(Source.id == source_id)
-    topic = Topic.get(Topic.id == topic_id)
-
-    try:
-        SourceTopic.create(source=source, topic=topic)
-
-        return {"source_topic_pair_added": True}
-    
-    except ValidationError as e:
-        return e
-
-
-def db_get_topic_sources(topic_id):
-    query = SourceTopic.select().where(SourceTopic.topic_id == topic_id)
-    pairs = [art.source_id for art in query]
-    return pairs
-
-
-def db_get_source_topics(source_id):
-    query = SourceTopic.select().where(SourceTopic.source_id == source_id)
-    pairs = [art.topic_id for art in query]
-    return pairs
-
-
-def db_delete_source_topics(source_id, topic_id):
-    SourceTopic.delete().where(SourceTopic.source_id == source_id).where(SourceTopic.topic_id == topic_id).execute()
-    return {"source_topic_pair_deleted": [source_id, topic_id]}
-
-
-
-def db_get_topic_articles(topic_id):
-    query = ArticleTopic.select().where(ArticleTopic.topic_id == topic_id)
-    pairs = [art.source_id for art in query]
-    return pairs
-
-
-def db_get_article_topics(source_id):
-    query = ArticleTopic.select().where(ArticleTopic.source_id == source_id)
-    pairs = [art.topic_id for art in query]
-    return pairs

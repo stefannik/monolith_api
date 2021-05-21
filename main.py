@@ -36,21 +36,14 @@ async def test():
     #     'published': "2021-04-09 23:22:39",
     # }
     # sources = db_article_insert(**test)
-    test = [
-        {
-            'source': 1,
-            'title': "UFO Test 1",
-            'url': "https://www.google.com/ufo1",
-            'published': "2021-04-09 23:22:39",
-        },
-        {
-            'source': 1,
-            'title': "UFO test 2",
+    test = {
+            'name': "Test bla",
             'url': "https://www.google.com/ufo2",
-            'published': "2021-04-09 23:22:39",
-        },
-    ]
-    sources = db_article_delete(1371)
+            'last_updated': "2021-04-09 23:22:39",
+            'status': 301
+        }
+    
+    sources = db_select_source_alldata(32)
     return sources
 
 
