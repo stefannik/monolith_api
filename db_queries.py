@@ -1,9 +1,9 @@
-import enum
+import numpy as np
 from db_models import SourceTopic, ArticleTopic, db, Source, ValidatedSource, Article, ValidatedArticle, Topic, ValidatedTopic
 from pydantic import ValidationError
 from peewee import IntegrityError
-from datetime import datetime
-import numpy as np
+from datetime import timedelta, datetime
+from typing import Optional
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -51,12 +51,27 @@ def db_article_select_list(list_of_article_ids):
     return articles
 
 
-def db_article_select_list_by_source(source_id):
-    # sort & filter, add topics field
-    # query = Article.select().where(Article.source == source_id).order_by(Article.published.desc())
-    # return [transform_article(art) for art in query]
+def db_article_select_list_by_source(source_id, order_by: Optional[str] = 'latest'):
+    # order_by: a-z, z-a, relevance
+    # filter_by: date_range, tag
     source_articles = Source.get_by_id(source_id).articles
+    print(order_by)
+    if order_by == 'a-z':
+        source_articles = source_articles.order_by(Article.title.asc())
+    elif order_by == 'z-a':
+        source_articles = source_articles.order_by(Article.title.desc())
+    elif order_by == 'relevance':
+        source_articles = source_articles.order_by(Article.mono.desc())
+    else:
+        source_articles = source_articles.order_by(Article.published.desc())
     return [article.__data__ for article in source_articles]
+
+
+def db_article_select_today(order_by: Optional[str] = 'latest'):
+    # yesterday = datetime.now() - timedelta(hours=24)
+    yesterday = datetime.now() - timedelta(days=47)
+    articles = Article.select().where(Article.published>yesterday).order_by(Article.mono.desc()).limit(10)
+    return [article.__data__ for article in articles]
 
 
 def db_article_select(article_id):
@@ -212,3 +227,12 @@ def db_insert_rss_source():
     # insert articles
     return True
 
+
+def db_search_articles(query):
+    articles = Article.select().where(Article.title.contains(query)).order_by(Article.title.desc()).limit(10)
+    return [article.__data__ for article in articles]
+
+
+def db_search_feeds(query):
+    sources = Source.select().where(Source.name.contains(query)).order_by(Source.name.desc()).limit(10)
+    return [src.__data__ for src in sources]
