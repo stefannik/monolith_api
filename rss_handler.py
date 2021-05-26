@@ -62,7 +62,8 @@ def fetch_rss_feed(url):
         feed_data = {
             "valid_feed": True,
             "name": feed.feed.title,
-            "url": feed.href,
+            "url": feed.feed.link,
+            "rss_url": feed.href,
             "last_updated": datetime.fromtimestamp(mktime(feed.feed.updated_parsed)),
             "status": feed.status
         }
@@ -75,6 +76,7 @@ def fetch_rss_feed(url):
 
         feed_data['entries'] = entries
 
+        # OUTPUT --> {valid_feed, name, url, rss_url, last_updated, status, description, logo, entries}
         return feed_data
     
     # RETURN ERROR - NOT VALID FEED
@@ -83,8 +85,10 @@ def fetch_rss_feed(url):
 
 
 # guardian_source = fetch_rss_feed("http://www.buzzmachine.com/feed/")
-
+# print(guardian_source["url"])
 
 # test = ['https://buzzmachine.com/wp-content/uploads/tea-party-640x416.jpg']
 # test_st = ", ".join(test)
 # test_ne = test_st.split(", ")
+
+

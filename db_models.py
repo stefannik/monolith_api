@@ -9,11 +9,13 @@ db = SqliteDatabase('test.db')
 class Source(Model):
     # No need for ID field, peewee adds one automatically as a primary key autoincrement
     name = CharField(index=True, unique=True)
-    url = TextField(index=True, unique=True)
+    url = TextField(index=True, unique=True, null=True)
+    rss_url = TextField(index=True, unique=True)
     last_updated = DateTimeField(index=True)
     description = TextField(null=True)
     logo = TextField(null=True)
     origin = CharField(null=True)
+    avg_update_gap = IntegerField()
     status = IntegerField()
 
     class Meta:
@@ -23,11 +25,13 @@ class Source(Model):
 class ValidatedSource(BaseModel):
     name: constr(max_length=255)
     url: str
+    url: str
     last_updated: datetime
     target_audience: Optional[constr(max_length=255)]
     description: Optional[str]
     logo: Optional[str]
     origin: constr(max_length=255)
+    avg_update_gap: int
     status: int
 
     class Config:

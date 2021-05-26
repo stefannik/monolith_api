@@ -1,3 +1,4 @@
+from copy import Error
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import HttpUrl, validate_arguments
@@ -130,3 +131,41 @@ async def content_article(article_id):
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+from fastapi_utils.tasks import repeat_every
+
+
+@api.on_event("startup")
+@repeat_every(seconds=2, wait_first=True)
+def periodic():
+    now = datetime.now()
+
+    # Current datetime - datetime last_updated is more the minimum requiered timedelta gap for updating
+    for source in Source.select():
+
+        # acceptable_gap = timedelta(minutes=source.avg_update_gap)
+        acceptable_gap = timedelta(days=52)
+
+        if now - source.last_updated > acceptable_gap:
+            # 1. REQUEST RSS FEED
+            feed_data = fetch_rss_feed(source.rss_url)
+            print(source.id)
+
+            # 2. COMPARE LAST_UPDATED DATES
+            if feed_data['last_updated'] != source.last_updated:
+                source_data = source.__data__
+                # differences = [k for k in feed_data if feed_data[k] != source_data[k]]
+                for k in feed_data:
+                    print(feed_data[k])
+
+                # if feed_data['name'] != source.name:
+                #     source.name = feed_data['name'] 
+                
+
+                print(source.id)
+                print(feed_data['last_updated'])
+
+            print(feed_data.keys())
+            # source.url = 'testing'
+            # source.save()
+    
