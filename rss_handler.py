@@ -1,17 +1,27 @@
+from html import parser
 import feedparser
+from feedparser.api import parse
 import html2text
+import requests
+import io
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from datetime import datetime
 from time import mktime
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
 
-def fetch_rss_feed(url):
-    feed = feedparser.parse(url)
-    
-    # REVIEW ALL ENTRIES
-    entries = []
-    for entry in feed.entries:
+def rss_pull(url):
+    headers = {'User-Agent': 'RSS Parser'}
+    resp = requests.get(url, timeout=(2.0, 5.0), headers=headers)
+    status = resp.status_code
+    content = io.BytesIO(resp.content)
+    return {'status': status, 'content': content}
+
+
+def rss_parse_entries(entries):
+    articles = []
+    for entry in entries:
         entry_has_title = 'title' in entry.keys() and len(entry.title) > 0
         entry_has_url = 'link' in entry.keys() and len(urlparse(entry.link).scheme) > 0
         entry_has_published_date = 'published_parsed' in entry.keys()
@@ -49,46 +59,72 @@ def fetch_rss_feed(url):
             if len(images) > 0:
                 valid_entry['images'] = ", ".join(images)
 
-            entries.append(valid_entry)
-    
+            articles.append(valid_entry)
+    return articles
 
-    # VALIDITY CHECK
-    has_title = 'title' in feed.feed.keys()     # Feed has title
-    has_updated = 'updated_parsed' in feed.feed.keys() # Feed has date last updated
-    has_valid_entries = len(entries) > 0        # Feed hast more than 0 valid entries
-    
-    # RETURN DATA
-    if has_title and has_updated and has_valid_entries:
-        feed_data = {
-            "valid_feed": True,
-            "name": feed.feed.title,
-            "url": feed.feed.link,
-            "rss_url": feed.href,
-            "last_updated": datetime.fromtimestamp(mktime(feed.feed.updated_parsed)),
-            "status": feed.status
+
+def rss_content_parser(content):
+    parsed_content = feedparser.parse(content)
+    parsed_entries = rss_parse_entries(parsed_content.entries)
+
+    article_dates = sorted([ent['published'] for ent in parsed_entries], reverse=True)
+    last_updated = article_dates[0]
+
+
+    has_title = 'title' in parsed_content.feed.keys()
+    has_valid_entries = len(parsed_entries) > 0
+
+    if has_title and has_valid_entries:
+
+        feed = {
+            "name": parsed_content.feed.title,
+            "articles": parsed_entries,
+            "last_updated": last_updated
         }
 
-        if 'subtitle' in feed.feed.keys() and len(feed.feed.subtitle) > 0:
-            feed_data['description'] = feed.feed.subtitle
+        if 'subtitle' in parsed_content.feed.keys() and len(parsed_content.feed.subtitle) > 0:
+            feed['description'] = parsed_content.feed.subtitle
 
-        if 'image' in feed.feed.keys() and len(urlparse(feed.feed.image.href).scheme) > 0:
-            feed_data['logo'] = feed.feed.image.href
+        if 'image' in parsed_content.feed.keys() and len(urlparse(parsed_content.feed.image.href).scheme) > 0:
+            feed['logo'] = parsed_content.feed.image.href
+        
+        return feed
 
-        feed_data['entries'] = entries
-
-        # OUTPUT --> {valid_feed, name, url, rss_url, last_updated, status, description, logo, entries}
-        return feed_data
-    
-    # RETURN ERROR - NOT VALID FEED
     else:
-        return {"valid_feed": False}
+        raise Exception("The RSS feed doesn't have a valid title or any entries")
+
+def rss_fetch(url):
+    try:
+        content = rss_pull(url)
+        processed_content = rss_content_parser(content['content'])
+
+        if content['status'] == 301:
+            print("do something")
+        
+        return {'status': content['status'], 'payload': processed_content}
+
+    except ConnectTimeout:
+        return {'status': 408, 'payload': "Connect Timeout Error"}
+
+    except ReadTimeout:
+        return {'status': 408, 'payload': "Read Timeout Error"}
+
+    # except BaseException:
+        # return {'status': 400, 'payload': "Invalid RSS feed: no title or entries"}
+
+    except Exception as e:
+        return {'status': 400, 'payload': e}
 
 
-# guardian_source = fetch_rss_feed("http://www.buzzmachine.com/feed/")
-# print(guardian_source["url"])
+# print(rss_fetch("http://www.esa.int/rss/TopNews.xml")['status'])
 
-# test = ['https://buzzmachine.com/wp-content/uploads/tea-party-640x416.jpg']
-# test_st = ", ".join(test)
-# test_ne = test_st.split(", ")
+# content = rss_pull("https://phys.org/rss-feed/")
+# processed_content = rss_content_parser(content['content'])
+# print(processed_content)
 
 
+# import csv
+# with open('database/base_sources.csv', 'r') as csvfile:
+#     datareader = csv.reader(csvfile)
+#     for row in datareader:
+#         print(rss_fetch(row[2])['status'])

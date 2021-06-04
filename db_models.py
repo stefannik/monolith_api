@@ -3,7 +3,7 @@ from pydantic import BaseModel, constr, validator
 from datetime import datetime
 from typing import Optional
 
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database/database01_20210531.db')
 
 
 class Source(Model):
@@ -14,8 +14,10 @@ class Source(Model):
     last_updated = DateTimeField(index=True)
     description = TextField(null=True)
     logo = TextField(null=True)
+    subscription = BooleanField()
+    media_type = TextField()
     origin = CharField(null=True)
-    avg_update_gap = IntegerField()
+    update_gap = IntegerField()
     status = IntegerField()
 
     class Meta:
@@ -25,13 +27,14 @@ class Source(Model):
 class ValidatedSource(BaseModel):
     name: constr(max_length=255)
     url: str
-    url: str
+    rss_url: str
     last_updated: datetime
-    target_audience: Optional[constr(max_length=255)]
     description: Optional[str]
     logo: Optional[str]
+    subscription: bool
+    media_type: str
     origin: constr(max_length=255)
-    avg_update_gap: int
+    update_gap: int
     status: int
 
     class Config:
