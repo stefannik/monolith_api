@@ -3,7 +3,7 @@ from pydantic import BaseModel, constr, validator
 from datetime import datetime
 from typing import Optional
 
-db = SqliteDatabase('database/database01_20210531.db')
+db = SqliteDatabase('database/database01_20210705.db')
 
 
 class Source(Model):
@@ -86,7 +86,7 @@ class ValidatedArticle(BaseModel):
 
 class Topic(Model):
     # No need for ID field, peewee adds one automatically as a primary key autoincrement
-    name = TextField(index=True)
+    name = TextField(index=True, unique=True)
     description = TextField(index=False, null=True)
 
     class Meta:

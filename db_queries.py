@@ -141,6 +141,14 @@ def db_topic_delete(topic_id):
     return deleted
 
 
+def db_topic_exists(topic_name):
+    query = Topic.select().where(Topic.name == topic_name)
+    if query.exists():
+        return {'exists': True, 'id': query[0].id}
+    else:
+        return {'exists': False}
+
+
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE-TOPIC TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
