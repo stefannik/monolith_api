@@ -55,7 +55,7 @@ def db_article_select_list_by_source(source_id, order_by: Optional[str] = 'lates
     # order_by: a-z, z-a, relevance
     # filter_by: date_range, tag
     source_articles = Source.get_by_id(source_id).articles
-    print(order_by)
+    # print(order_by)
     if order_by == 'a-z':
         source_articles = source_articles.order_by(Article.title.asc())
     elif order_by == 'z-a':

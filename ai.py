@@ -5,6 +5,7 @@ from pytorch_transformers import BertModel
 from torch import nn, optim, tensor, cuda, save
 import numpy as np
 import timeit
+from transformers import pipeline
 
 
 start = timeit.default_timer()
@@ -102,3 +103,33 @@ def score(text, model):
 # sample_portada_score = score(sample, 'portada')
 # print(sample_sense_score)
 # print(sample_portada_score)
+
+
+def article_tagger(text):
+    # model_zero = 'joeddav/bart-large-mnli-yahoo-answers'
+    model_zero = 'typeform/distilbert-base-uncased-mnli'
+    # model_zero = 'valhalla/distilbart-mnli-12-1'
+    # model_zero = 'facebook/bart-large-mnli'
+    # model_zero = 'distilbert-base-cased'
+    classifier_zero = pipeline('zero-shot-classification', model=model_zero, framework="pt")
+    labels = [
+        "US Politics", "Science", "Technology", "Business", "Sport", "Travel",
+        "Gaming", "Culture", "Space", "Economics", "Music", "Books", "Movies", 
+        "Design", "UFO", "Climate", "Health", "Education", "Television", "Style", 
+        "Food", 
+    ]
+    prediction = classifier_zero(text, labels, multi_label=False)
+    scores = prediction['scores']
+    return prediction['labels'][0:2]
+
+
+# test1 = "Kim Kardashian West’s shapewear brand, Skims, will provide the official underwear, loungewear and pajamas for female American athletes at the Tokyo Olympic and Paralympic Games this summer. Ms. Kardashian West announced the partnership on Monday, sharing images of Team U.S.A. athletes modeling the collection on Instagram."
+# test2 = "On Saul Steinberg’s legendary 1976 New Yorker cover depicting a world map, Manhattan takes up the entire bottom half while the rest of the world is squished onto the top. It’s a distortion of reality as are nearly all maps — including the ones inside of our heads, according to Rebecca Schwarzlose’s enlightening and ambitious new book, “Brainscapes.”"
+# test3 = "The director Barry Sonnenfeld has never been a theater guy. “I am not a fan of Broadway musicals,” he grumped affably over the phone. “I’m not a fan of filmed musicals. I don’t understand why people would stop talking and start singing.” So Sonnenfeld, who is best known for the “Men in Black” movies, was a curious choice to direct the new Apple TV+ comedy “Schmigadoon!,” a series whose very title screams musical theater spoof."
+# print(article_tagger(test1))
+# print(article_tagger(test2))
+# print(article_tagger(test3))
+
+# end = timeit.default_timer()
+
+# print(end-start)

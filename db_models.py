@@ -3,7 +3,7 @@ from pydantic import BaseModel, constr, validator
 from datetime import datetime
 from typing import Optional
 
-db = SqliteDatabase('database/database01_20210705.db')
+db = SqliteDatabase('database/database01_20210707.db')
 
 
 class Source(Model):
@@ -52,13 +52,12 @@ class Article(Model):
     summary = TextField(null=True)
     content_raw = TextField(null=True)
     content = TextField(null=True)
-    tags = TextField(null=True)
     author = CharField(null=True)
     images = TextField(null=True)
     type_of_article = CharField(null=True)
-    sense = DecimalField(null=True)
-    portada = DecimalField(index=True, null=True)
-    mono = DecimalField(index=True, null=True)
+    sense_score = DecimalField(null=True)
+    portada_score = DecimalField(index=True, null=True)
+    impact_score = DecimalField(index=True, null=True)
 
     class Meta:
         database = db
@@ -72,13 +71,12 @@ class ValidatedArticle(BaseModel):
     summary: Optional[str]
     content_raw: Optional[str]
     content: Optional[str]
-    tags: Optional[str]
     author: Optional[constr(max_length=255)]
     images: Optional[str]
     type_of_article: Optional[constr(max_length=255)]
-    sense: Optional[float]
-    portada: Optional[float]
-    mono: Optional[float]
+    sense_score: Optional[float]
+    portada_score: Optional[float]
+    impact_score: Optional[float]
 
     class Config:
         orm_mode = True

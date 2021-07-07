@@ -2,13 +2,17 @@
 # 2. Add RSS sources
 
 from rss_handler import RSSFeed
-from db_queries import db_topic_insert, db_topic_exists, db_source_insert, db_sourcetopic_insert
+from ai import score
+from db_queries import db_topic_insert, db_topic_exists, db_source_insert, db_sourcetopic_insert, db_article_insert
 import csv
+
 
 filename = 'database/base_sources_short.csv'
 
 with open(filename, 'r') as csvfile:
     datareader = csv.reader(csvfile)
+
+    count = 0
     for row in datareader:
         subscription = row[3]
         media_type = row[4]
@@ -17,38 +21,63 @@ with open(filename, 'r') as csvfile:
         feed = RSSFeed(row[2])
         feed.setup()
 
+        count = count + 1
+        est_analysis = len(feed.entries)*6
+        print('Starting: {}/69'.format(count))
+        print(row[2])
+
         if feed.valid_feed():
-            # 1. ADD SOURCE
-            source = {
-                "name": feed.name,
-                "url": feed.url,
-                "rss_url": feed.rss_url,
-                "last_updated": feed.last_updated,
-                "subscription": subscription,
-                "media_type": media_type,
-                "origin": "RSS",
-                "update_gap": feed.update_gap,
-                "status": feed.valid_feed(),
-            }
+            # 1. PREP SOURCE OBJECT
+            source = vars(feed).copy()
+            source['subscription'] = subscription
+            source['media_type'] = media_type
+            source['origin'] = 'RSS'
+            source['status'] = feed.valid_feed()
+            source.pop('entries')
+            source.pop('entries_dates')
+            source.pop('raw_content')
+            source.pop('parsed_content')
 
-            if 'description' in vars(feed):
-                source["description"] = feed.description
-
-            if 'logo' in vars(feed):
-                source["logo"] = feed.logo
-
-            sourceid = db_source_insert(**source)
+            # 2. ADD SOURCE
+            sourceid = 1
+            # sourceid = db_source_insert(**source)
+            # print(sourceid)
 
 
-            # 2. ADD TOPIC IF IT DOESN'T EXIST
-            topic_exists = db_topic_exists(category)
-            if topic_exists['exists'] == False:
-                topicid = db_topic_insert(name=category)
-            else:
-                topicid = topic_exists['id']
+            # # 3. ADD TOPIC IF IT DOESN'T EXIST
+            # topic_exists = db_topic_exists(category)
+            # if topic_exists['exists'] == False:
+            #     topicid = db_topic_insert(name=category)
+            # else:
+            #     topicid = topic_exists['id']
             
-            # 3. ADD TOPIC-SOURCE REL
-            relid = db_sourcetopic_insert(sourceid, topicid)
+            # print(topicid)
+            
+            # # 4. ADD TOPIC-SOURCE REL
+            # relid = db_sourcetopic_insert(sourceid, topicid)
+
+            # 5. EVAL AND ADD ARTICLES
+            for entry in feed.entries:
+                if entry.valid_article():
+                    article = vars(entry)
+                    article.pop('data')
+
+                    article['source'] = sourceid
+
+                    sense_score = score(entry.title, 'sense')
+                    portada_score = score(entry.title, 'portada')
+                    impact_score = (sense_score + portada_score) / 2
+                    article['sense_score'] = float(sense_score)
+                    article['portada_score'] = float(portada_score)
+                    article['impact_score'] = float(impact_score)
+
+                    articleid = db_article_insert(**article)
+                    print(articleid)
+
+
+
+
+
 
             
 

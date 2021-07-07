@@ -16,7 +16,7 @@ class RSSFeedEntry:
         self.data = data
         self.title = False
         self.url = False
-        self.published_date = False
+        self.published = False
     
     def add_attributes(self):
         if 'title' in self.data.keys() and len(self.data.title) > 0:
@@ -47,8 +47,6 @@ class RSSFeedEntry:
             content_html = BeautifulSoup(self.data.content[0].value, "html.parser")
             for img in content_html.findAll("img"):
                 images.append(img['src'])
-        if 'tags' in self.data.keys():
-            self.tags = ", ".join([tag.term for tag in self.data.tags])
         if len(images) > 0:
             self.images = ", ".join(images)
         
@@ -124,10 +122,10 @@ class RSSFeed:
             self.sort_entries()
 
 
-test = RSSFeed('https://www.techradar.com/rss')
-test.setup()
-print(test.valid_feed())
-if test.valid_feed():
-    print(test.update_gap)
-else:
-    print(test.raw_content)
+# test = RSSFeed('https://www.techradar.com/rss')
+# test.setup()
+# print(test.valid_feed())
+# if test.valid_feed():
+#     print(test.update_gap)
+# else:
+#     print(test.raw_content)
