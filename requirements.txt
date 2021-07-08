@@ -1,0 +1,17 @@
+feedparser
+html2text
+requests
+numpy
+beautifulsoup4
+pydantic
+peewee
+torch 
+torchvision 
+torchaudio
+tqdm 
+boto3
+regex
+sentencepiece
+sacremoses
+transformers
+pytorch_transformers

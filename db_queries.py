@@ -1,5 +1,5 @@
 import numpy as np
-from db_models import SourceTopic, ArticleTopic, db, Source, ValidatedSource, Article, ValidatedArticle, Topic, ValidatedTopic
+from db_models import SourceArticle, SourceTopic, ArticleTopic, db, Source, ValidatedSource, Article, ValidatedArticle, Topic, ValidatedTopic
 from pydantic import ValidationError
 from peewee import IntegrityError
 from datetime import timedelta, datetime
@@ -32,6 +32,14 @@ def db_source_insert(**fields):
     # required fields: name, url, last_updated, status
     insert_source = Source.insert(fields).execute()
     return insert_source
+
+
+def db_source_exists(source_name):
+    query = Source.select().where(Source.name == source_name)
+    if query.exists():
+        return {'exists': True, 'id': query[0].id}
+    else:
+        return {'exists': False}
 
 
 def db_source_delete(source_id):
@@ -104,6 +112,22 @@ def db_article_delete(article_id):
     article = Article.get_by_id(article_id)
     deleted = article.delete_instance(recursive=True)
     return deleted
+
+
+def db_article_exists(article_url):
+    query = Article.select().where(Article.url == article_url)
+    if query.exists():
+        return {'exists': True, 'id': query[0].id}
+    else:
+        return {'exists': False}
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# SOURCE-ARTICLE TABLE
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_sourcearticle_insert(source_id, article_id):
+    SourceArticle.create(source=source_id, article=article_id)
+    return source_id, article_id
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

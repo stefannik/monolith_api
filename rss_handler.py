@@ -122,10 +122,12 @@ class RSSFeed:
             self.sort_entries()
 
 
-# test = RSSFeed('https://www.techradar.com/rss')
+# test = RSSFeed('http://feeds.washingtonpost.com/rss/politics')
 # test.setup()
 # print(test.valid_feed())
 # if test.valid_feed():
-#     print(test.update_gap)
+#     for en in test.entries:
+#         print(en.title)
+#         print(en.url)
 # else:
 #     print(test.raw_content)

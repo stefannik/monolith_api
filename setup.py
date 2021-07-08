@@ -3,11 +3,12 @@
 
 from rss_handler import RSSFeed
 from ai import score
-from db_queries import db_topic_insert, db_topic_exists, db_source_insert, db_sourcetopic_insert, db_article_insert
+from db_queries import db_article_exists, db_source_exists, db_sourcearticle_insert, db_topic_insert, db_topic_exists, db_source_insert, db_sourcetopic_insert, db_article_insert
 import csv
+from peewee import IntegrityError
 
 
-filename = 'database/base_sources_short.csv'
+filename = 'database/base_sources2.csv'
 
 with open(filename, 'r') as csvfile:
     datareader = csv.reader(csvfile)
@@ -25,7 +26,8 @@ with open(filename, 'r') as csvfile:
         est_analysis = len(feed.entries)*6
         print('Starting: {}/69'.format(count))
         print(row[2])
-
+        
+        # try:
         if feed.valid_feed():
             # 1. PREP SOURCE OBJECT
             source = vars(feed).copy()
@@ -38,31 +40,35 @@ with open(filename, 'r') as csvfile:
             source.pop('raw_content')
             source.pop('parsed_content')
 
-            # 2. ADD SOURCE
-            sourceid = 1
-            # sourceid = db_source_insert(**source)
-            # print(sourceid)
-
-
-            # # 3. ADD TOPIC IF IT DOESN'T EXIST
-            # topic_exists = db_topic_exists(category)
-            # if topic_exists['exists'] == False:
-            #     topicid = db_topic_insert(name=category)
-            # else:
-            #     topicid = topic_exists['id']
+            # 2. ADD SOURCE IF IT DOESN'T EXIST
+            source_exists = db_source_exists(feed.name)
+            if source_exists['exists'] == False:
+                sourceid = db_source_insert(**source)
+            else:
+                sourceid = source_exists['id']
             
-            # print(topicid)
+            print('Source: {}, {}'.format(sourceid, feed.name))
+
+            # 3. ADD TOPIC IF IT DOESN'T EXIST
+            topic_exists = db_topic_exists(category)
+            if topic_exists['exists'] == False:
+                topicid = db_topic_insert(name=category)
+            else:
+                topicid = topic_exists['id']
             
-            # # 4. ADD TOPIC-SOURCE REL
-            # relid = db_sourcetopic_insert(sourceid, topicid)
+            print('Topic: {}, {}'.format(topicid, category))
+            
+            # 4. ADD TOPIC-SOURCE REL
+            try:
+                relid = db_sourcetopic_insert(sourceid, topicid)
+            except IntegrityError:
+                print('ERROR: topic-rel exists')    
 
             # 5. EVAL AND ADD ARTICLES
             for entry in feed.entries:
                 if entry.valid_article():
                     article = vars(entry)
                     article.pop('data')
-
-                    article['source'] = sourceid
 
                     sense_score = score(entry.title, 'sense')
                     portada_score = score(entry.title, 'portada')
@@ -71,8 +77,26 @@ with open(filename, 'r') as csvfile:
                     article['portada_score'] = float(portada_score)
                     article['impact_score'] = float(impact_score)
 
-                    articleid = db_article_insert(**article)
-                    print(articleid)
+                    
+                    article_exists = db_article_exists(article['url'])
+                    if article_exists['exists'] == False:
+                        articleid = db_article_insert(**article)
+                    else:
+                        articleid = article_exists['id']
+
+                    print('Article: {}, {}'.format(articleid, article['title']))
+
+                    try:
+                        db_sourcearticle_insert(sourceid, articleid)
+                    except IntegrityError:
+                        print('Article is duplicate: {}'.format(article['title']))
+
+                    
+        # except:
+        #     print("BIG FUCKING ERRROR")
+        
+        print("-------------------------------------------------------")
+
 
 
 

@@ -3,7 +3,7 @@ from pydantic import BaseModel, constr, validator
 from datetime import datetime
 from typing import Optional
 
-db = SqliteDatabase('database/database01_20210707.db')
+db = SqliteDatabase('database/database01_20210708.db')
 
 
 class Source(Model):
@@ -41,10 +41,8 @@ class ValidatedSource(BaseModel):
         orm_mode = True
     
 
-
 class Article(Model):
     # No need for ID field, peewee adds one automatically as a primary key autoincrement
-    source = ForeignKeyField(Source, backref='articles')
     title = TextField(index=True)
     url = TextField(index=True, unique=True)
     published = DateTimeField(index=True)
@@ -99,6 +97,15 @@ class ValidatedTopic(BaseModel):
         orm_mode = True
 
 
+class SourceArticle(Model):  # Many-to-many relationship.
+    source = ForeignKeyField(Source, backref='articles')
+    article = ForeignKeyField(Article, backref="sources")
+
+    class Meta:
+        database = db
+        primary_key = CompositeKey('source', 'article')
+
+
 class SourceTopic(Model):  # Many-to-many relationship.
     source = ForeignKeyField(Source, backref='topics')
     topic = ForeignKeyField(Topic, backref="sources")
@@ -117,4 +124,4 @@ class ArticleTopic(Model):  # Many-to-many relationship.
         primary_key = CompositeKey('article', 'topic')
 
 
-# db.create_tables([Source, Article, Topic, SourceTopic, ArticleTopic])
+# db.create_tables([Source, Article, Topic, SourceArticle, SourceTopic, ArticleTopic])
