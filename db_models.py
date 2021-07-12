@@ -17,7 +17,8 @@ class Source(Model):
     subscription = BooleanField()
     media_type = TextField()
     origin = CharField(null=True)
-    update_gap = IntegerField()
+    avg_update_gap = IntegerField()
+    last_ping = DateTimeField()
     status = IntegerField()
 
     class Meta:
@@ -34,7 +35,8 @@ class ValidatedSource(BaseModel):
     subscription: bool
     media_type: str
     origin: constr(max_length=255)
-    update_gap: int
+    avg_update_gap: int
+    last_ping: datetime
     status: int
 
     class Config:

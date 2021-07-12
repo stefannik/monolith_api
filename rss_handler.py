@@ -104,7 +104,7 @@ class RSSFeed:
             if ind != len(self.entries_dates)-1:
                 diff = date - self.entries_dates[ind+1]
                 gaps.append(diff.total_seconds())
-        self.update_gap = average(gaps)
+        self.avg_update_gap = average(gaps)
     
     def valid_feed(self):
         if self.status and self.name and len(self.entries) > 0:

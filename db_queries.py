@@ -9,6 +9,10 @@ from typing import Optional
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_source_full_list():
+    sources = [source.__data__ for source in Source.select()]
+    return sources
+
 def db_source_select_list(list_of_source_ids):
     sources = []
     for source_id in list_of_source_ids:
@@ -125,6 +129,12 @@ def db_article_exists(article_url):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE-ARTICLE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_sourcearticle_select_source_articles(source_id):
+    source_articles = SourceArticle.select().where(SourceArticle.source_id == source_id)
+    source_articles_ids = [t.article_id for t in source_articles]
+    return db_article_select_list(source_articles_ids)
+
+
 def db_sourcearticle_insert(source_id, article_id):
     SourceArticle.create(source=source_id, article=article_id)
     return source_id, article_id

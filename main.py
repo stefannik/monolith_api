@@ -139,7 +139,7 @@ async def content_article(article_id):
 
 
 # @api.on_event("startup")
-# @repeat_every(seconds=2, wait_first=True)
+# @repeat_every(seconds=60, wait_first=True)
 # def periodic():
 #     now = datetime.now()
 
