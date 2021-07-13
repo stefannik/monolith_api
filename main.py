@@ -3,7 +3,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import HttpUrl, validate_arguments
 from db_queries import *
-from rss_handler import fetch_rss_feed
 from typing import Optional
 
 
@@ -35,10 +34,10 @@ async def test():
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # FEEDS
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-@api.get("/feeds/collection")
+@api.get("/feeds/topic_sources")
 async def feeds_collection(topic_id, order_by: Optional[str] = 'latest'):
     sources = db_sourcetopic_select_topic_sources(topic_id)
-    articles = [db_article_select_list_by_source(src['id'], order_by) for src in sources]
+    articles = [db_sourcearticle_select_source_articles(src['id']) for src in sources]
     return articles
 
 

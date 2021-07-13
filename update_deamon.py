@@ -27,15 +27,11 @@ class SourceUpdater:
 
         if gap_since_last_updated < timedelta(days=90):
             self.active = True
-        else:
-            print("INACTIVE")
 
         if gap_since_last_ping > ping_interval or gap_since_last_ping > timedelta(hours=24):
             self.needs_update = True
         
-        print("SETUP READY FOR: ", self.source_id)
     
-
     def add_new_articles(self):
         feed = RSSFeed(self.source['rss_url'])
         feed.setup()
@@ -70,8 +66,7 @@ class SourceUpdater:
                             db_sourcearticle_insert(self.source_id, articleid)
                             self.added_entries = True
                         except IntegrityError:
-                            print('Article is duplicate: {}'.format(article['title']))
-        print("NEW ARTICLES FOR: {}. ADDED: {}".format(self.source_id, self.added_entries))
+                            continue
     
 
     def update_info(self):
@@ -88,13 +83,12 @@ class SourceUpdater:
         if self.active and self.needs_update:
             self.add_new_articles()
             self.update_info()
-            print("UPDATE READY FOR: ", self.source_id)
 
 
-# for src_id in range(1, 67):
-#     src = SourceUpdater(src_id)
-#     src.setup()
-#     src.run()
+for src_id in range(1, 67):
+    src = SourceUpdater(src_id)
+    src.setup()
+    src.run()
 
 
 # import timeit
