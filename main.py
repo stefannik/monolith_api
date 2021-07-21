@@ -22,43 +22,47 @@ api.add_middleware(
 
 @api.get("/")
 async def root():
-    return {"message": "This is Monolith API v0.1.8"}
-
-
-@api.get("/test")
-async def test():
-    sources = db_select_source_alldata(32)
-    return sources
+    return {"message": "This is Monolith API v0.1.18"}
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # FEEDS
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-@api.get("/feeds/topic_sources")
-async def feeds_collection(topic_id, order_by: Optional[str] = 'latest'):
-    sources = db_sourcetopic_select_topic_sources(topic_id)
-    articles = [db_sourcearticle_select_source_articles(src['id']) for src in sources]
-    return articles
+@api.get("/feeds/recent")
+async def feeds_recent(timeframe: int, limit: Optional[int] = 50, ):
+    feed = db_article_select_recent(timeframe, limit, order_by)
+    return feed
 
 
 @api.get("/feeds/source")
-async def feeds_source(source_id, order_by: Optional[str] = 'latest'):
-    source = db_source_select(source_id)
-    source['topics'] = db_sourcetopic_select_source_topics(source_id)
-    source['articles'] = db_article_select_list_by_source(source_id, order_by)
-    return source
+async def feeds_source(source_id: int, page: Optional[int] = 1, ids: Optional[str] = '0', order_by: Optional[str] = 'latest'):
+    payload = {'page': page}
+
+    if page == 1:
+        articles = db_source_articles(source_id, order_by)
+        payload['articles'] = articles[:50]
+        payload['feed_ids'] = [a['id'] for a in articles]
+        return payload
+    else:
+        payload['feed_ids'] = [int(id) for id in ids.split(',')],
+        end = (page*50)
+        start = end-50
+        page_ids = payload['feed_ids'][start:end]
+        payload['articles'] = db_article_select_list(page_ids, order_by)
+        return payload
+
+
+@api.get("/feeds/topic")
+async def feeds_tag(topic_id, order_by: Optional[str] = 'latest'):
+
+    return 1
 
 
 @api.get("/feeds/tag")
 async def feeds_tag(topic_id, order_by: Optional[str] = 'latest'):
-    articles = db_articletopic_select_topic_articles(topic_id)
-    return articles
 
+    return 1
 
-@api.get("/feeds/today")
-async def feeds_today(order_by: Optional[str] = 'latest'):
-    articles = db_article_select_today()
-    return articles
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -134,40 +138,22 @@ async def content_article(article_id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-# from fastapi_utils.tasks import repeat_every
+from fastapi_utils.tasks import repeat_every
+from update_deamon import SourceUpdater
+import time
 
-
-# @api.on_event("startup")
-# @repeat_every(seconds=60, wait_first=True)
-# def periodic():
-#     now = datetime.now()
-
-#     # Current datetime - datetime last_updated is more the minimum requiered timedelta gap for updating
-#     for source in Source.select():
-
-#         # acceptable_gap = timedelta(minutes=source.avg_update_gap)
-#         acceptable_gap = timedelta(days=52)
-
-#         if now - source.last_updated > acceptable_gap:
-#             # 1. REQUEST RSS FEED
-#             feed_data = fetch_rss_feed(source.rss_url)
-#             print(source.id)
-
-#             # 2. COMPARE LAST_UPDATED DATES
-#             if feed_data['last_updated'] != source.last_updated:
-#                 source_data = source.__data__
-#                 # differences = [k for k in feed_data if feed_data[k] != source_data[k]]
-#                 for k in feed_data:
-#                     print(feed_data[k])
-
-#                 # if feed_data['name'] != source.name:
-#                 #     source.name = feed_data['name'] 
-                
-
-#                 print(source.id)
-#                 print(feed_data['last_updated'])
-
-#             print(feed_data.keys())
-#             # source.url = 'testing'
-#             # source.save()
+@api.on_event("startup")
+@repeat_every(seconds=10, wait_first=2)
+def periodic():
+    # 1. Repeat every 10 seconds
+    # 2. Check every source for avg_update_time * 20% distance from now
+    # 3. Queue update
     
+    sources = [src['id'] for src in db_source_full_list()]
+
+    for src_id in sources:
+        print("UPDATING ", src_id)
+        src = SourceUpdater(src_id)
+        src.setup()
+        src.run()
+

@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from peewee import IntegrityError
 from datetime import timedelta, datetime
 from typing import Optional
+from operator import itemgetter
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -12,6 +13,7 @@ from typing import Optional
 def db_source_full_list():
     sources = [source.__data__ for source in Source.select()]
     return sources
+
 
 def db_source_select_list(list_of_source_ids):
     sources = []
@@ -24,6 +26,20 @@ def db_source_select_list(list_of_source_ids):
 def db_source_select(source_id):
     source = Source.get_by_id(source_id)
     return source.__data__
+
+
+def db_source_articles(source_id, order_by: Optional[str] = 'latest'):
+    src_data = Source.get_by_id(source_id).articles
+    articles = [t.article.__data__ for t in src_data]
+    
+    if order_by == 'relevance':
+        articles = sorted(articles, key=itemgetter('impact_score'))
+    elif order_by == 'oldest':
+        articles = sorted(articles, key=itemgetter('published'))
+    else:
+        articles = sorted(articles, key=itemgetter('published'), reverse=True)
+
+    return articles
 
 
 def db_source_update(source_id, **fields):
@@ -55,34 +71,29 @@ def db_source_delete(source_id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ARTICLE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def db_article_select_list(list_of_article_ids):
-    articles = []
-    for art_id in list_of_article_ids:
-        query = Article.get_by_id(art_id)
-        articles.append(query.__data__)
+def db_article_select_list(article_ids, order_by: Optional[str] = 'latest'):
+    if order_by == 'oldest':
+        articles = Article.select().where(Article.id.in_(article_ids)).order_by(Article.published.asc())
+    elif order_by == 'relevance':
+        articles = Article.select().where(Article.id.in_(article_ids)).order_by(Article.impact_score.desc())
+    else:
+        articles = Article.select().where(Article.id.in_(article_ids)).order_by(Article.published.desc())
+    articles = [a.__data__ for a in articles]
     return articles
 
 
-def db_article_select_list_by_source(source_id, order_by: Optional[str] = 'latest'):
-    # order_by: a-z, z-a, relevance
-    # filter_by: date_range, tag
-    source_articles = Source.get_by_id(source_id).articles
-    # print(order_by)
-    if order_by == 'a-z':
-        source_articles = source_articles.order_by(Article.title.asc())
-    elif order_by == 'z-a':
-        source_articles = source_articles.order_by(Article.title.desc())
-    elif order_by == 'relevance':
-        source_articles = source_articles.order_by(Article.mono.desc())
+def db_article_select_recent(timeframe, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
+    last_n_hours = datetime.now() - timedelta(hours=timeframe)
+    
+    if order_by == 'relevance':
+        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.impact_score.desc()).limit(limit)
+    elif order_by == 'latest':
+        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
+    elif order_by == 'oldest':
+        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.asc()).limit(limit)
     else:
-        source_articles = source_articles.order_by(Article.published.desc())
-    return [article.__data__ for article in source_articles]
+        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
 
-
-def db_article_select_today(order_by: Optional[str] = 'latest'):
-    # yesterday = datetime.now() - timedelta(hours=24)
-    yesterday = datetime.now() - timedelta(days=47)
-    articles = Article.select().where(Article.published>yesterday).order_by(Article.mono.desc()).limit(10)
     return [article.__data__ for article in articles]
 
 
@@ -129,12 +140,6 @@ def db_article_exists(article_url):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE-ARTICLE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def db_sourcearticle_select_source_articles(source_id):
-    source_articles = SourceArticle.select().where(SourceArticle.source_id == source_id)
-    source_articles_ids = [t.article_id for t in source_articles]
-    return db_article_select_list(source_articles_ids)
-
-
 def db_sourcearticle_insert(source_id, article_id):
     SourceArticle.create(source=source_id, article=article_id)
     return source_id, article_id

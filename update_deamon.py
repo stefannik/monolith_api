@@ -1,16 +1,18 @@
 import json
 from datetime import time, timedelta
 from datetime import datetime
-from db_queries import db_article_exists, db_article_insert, db_source_select, db_source_update, db_sourcearticle_insert, db_source_full_list, db_source_select_list, db_sourcearticle_select_source_articles
+from db_queries import db_article_exists, db_article_insert, db_source_select, db_source_update, db_sourcearticle_insert, db_source_full_list, db_source_select_list
 from rss_handler import RSSFeed
 from ai import score
 from peewee import IntegrityError
 from numpy import average
+from typing import Optional
 
 
 class SourceUpdater:
-    def __init__(self, source_id):
+    def __init__(self, source_id, force: Optional[bool] = False):
         self.source_id = source_id
+        self.force = force
         self.now = datetime.now()
         self.active = False
         self.needs_update = False
@@ -80,15 +82,16 @@ class SourceUpdater:
 
 
     def run(self):
-        if self.active and self.needs_update:
+        if (self.active and self.needs_update) or self.force:
             self.add_new_articles()
             self.update_info()
 
 
-for src_id in range(1, 67):
-    src = SourceUpdater(src_id)
-    src.setup()
-    src.run()
+# for src_id in range(1, 67):
+#     print("updating ", src_id)
+#     src = SourceUpdater(src_id, True)
+#     src.setup()
+#     src.run()
 
 
 # import timeit
