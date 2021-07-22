@@ -29,7 +29,7 @@ async def root():
 # FEEDS
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 @api.get("/feeds/recent")
-async def feeds_recent(timeframe: int, limit: Optional[int] = 50, ):
+async def feeds_recent(timeframe: int, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
     feed = db_article_select_recent(timeframe, limit, order_by)
     return feed
 
@@ -53,15 +53,25 @@ async def feeds_source(source_id: int, page: Optional[int] = 1, ids: Optional[st
 
 
 @api.get("/feeds/topic")
-async def feeds_tag(topic_id, order_by: Optional[str] = 'latest'):
-
-    return 1
+async def feeds_topic(topic_id, timeframe: int, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
+    payload = {
+        "topic": db_topic_select(topic_id),
+        "sources": db_sourcetopic_select_topic_sources(topic_id),
+    }
+    sources_ids = [src['id'] for src in payload['sources']]
+    payload['articles'] = db_sourcearticle_select_multi(sources_ids, timeframe, limit, order_by)
+    return payload
 
 
 @api.get("/feeds/tag")
-async def feeds_tag(topic_id, order_by: Optional[str] = 'latest'):
-
-    return 1
+async def feeds_tag(topic_id, timeframe: int, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
+    payload = {
+        "topic": db_topic_select(topic_id),
+        "sources": db_sourcetopic_select_topic_sources(topic_id),
+    }
+    sources_ids = [src['id'] for src in payload['sources']]
+    payload['articles'] = db_sourcearticle_select_multi(sources_ids, timeframe, limit, order_by)
+    return payload
 
 
 
@@ -78,8 +88,8 @@ async def references_sources(featured: Optional[bool] = False):
         return sources
 
 
-@api.get("/references/collections")
-async def references_collections(featured: Optional[bool] = False):
+@api.get("/references/topics")
+async def references_topics(featured: Optional[bool] = False):
     if featured:
         return []
     else:
@@ -91,20 +101,6 @@ async def references_collections(featured: Optional[bool] = False):
             topic['sources'] = db_sourcetopic_select_topic_sources(topic_id)
             collections.append(topic)
         return collections
-
-
-@api.get("/references/tags")
-async def references_tags(featured: Optional[bool] = False):
-    if featured:
-        return []
-    else:
-        tags = []
-        topic_ids_with_sources = [s.topic_id for s in ArticleTopic.select()]
-        topic_ids = set(topic_ids_with_sources)
-        for topic_id in topic_ids:
-            topic = db_topic_select(topic_id)
-            tags.append(topic)
-        return tags
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -138,22 +134,22 @@ async def content_article(article_id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-from fastapi_utils.tasks import repeat_every
-from update_deamon import SourceUpdater
-import time
+# from fastapi_utils.tasks import repeat_every
+# from update_deamon import SourceUpdater
+# import time
 
-@api.on_event("startup")
-@repeat_every(seconds=10, wait_first=2)
-def periodic():
-    # 1. Repeat every 10 seconds
-    # 2. Check every source for avg_update_time * 20% distance from now
-    # 3. Queue update
+# @api.on_event("startup")
+# @repeat_every(seconds=10, wait_first=2)
+# def periodic():
+#     # 1. Repeat every 10 seconds
+#     # 2. Check every source for avg_update_time * 20% distance from now
+#     # 3. Queue update
     
-    sources = [src['id'] for src in db_source_full_list()]
+#     sources = [src['id'] for src in db_source_full_list()]
 
-    for src_id in sources:
-        print("UPDATING ", src_id)
-        src = SourceUpdater(src_id)
-        src.setup()
-        src.run()
+#     for src_id in sources:
+#         print("UPDATING ", src_id)
+#         src = SourceUpdater(src_id)
+#         src.setup()
+#         src.run()
 

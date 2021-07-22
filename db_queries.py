@@ -99,7 +99,10 @@ def db_article_select_recent(timeframe, limit: Optional[int] = 50, order_by: Opt
 
 def db_article_select(article_id):
     article = Article.get_by_id(article_id)
-    return article.__data__
+    sources = article.sources
+    data = article.__data__
+    data['sources'] = [s.source.id for s in sources]
+    return data
 
 
 def db_article_update(article_id, **fields):
@@ -140,6 +143,22 @@ def db_article_exists(article_url):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # SOURCE-ARTICLE TABLE
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def db_sourcearticle_select_multi(sources, timeframe, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
+    last_n_hours = datetime.now() - timedelta(hours=timeframe)
+    articles = Article.select().join(SourceArticle).where(SourceArticle.source.in_(sources))
+
+    if order_by == 'relevance':
+        articles = Article.select().join(SourceArticle).where(SourceArticle.source.in_(sources)).where(Article.published > last_n_hours).order_by(Article.impact_score.desc()).limit(limit)
+    elif order_by == 'latest':
+        articles = Article.select().join(SourceArticle).where(SourceArticle.source.in_(sources)).where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
+    elif order_by == 'oldest':
+        articles = Article.select().join(SourceArticle).where(SourceArticle.source.in_(sources)).where(Article.published > last_n_hours).order_by(Article.published.asc()).limit(limit)
+    else:
+        articles = Article.select().join(SourceArticle).where(SourceArticle.source.in_(sources)).where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
+
+    return [a.__data__ for a in articles]
+
+
 def db_sourcearticle_insert(source_id, article_id):
     SourceArticle.create(source=source_id, article=article_id)
     return source_id, article_id
@@ -258,21 +277,6 @@ def db_source_select_all():
         sources.append(data)
 
     return sources
-
-
-def db_select_source_alldata(source_id):
-    source = db_source_select(source_id)
-    source['topics'] = db_sourcetopic_select_source_topics(source_id)
-    source['articles'] = db_article_select_list_by_source(source_id)
-    return source
-
-
-def db_insert_rss_source():
-    # insert source
-    # insert new topic (if not in table Topics)
-    # insert source-topic relationships
-    # insert articles
-    return True
 
 
 def db_search_articles(query):
