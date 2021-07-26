@@ -29,7 +29,7 @@ async def root():
 # FEEDS
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 @api.get("/feeds/recent")
-async def feeds_recent(timeframe: int, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
+async def feeds_recent(timeframe: Optional[int] = 24, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
     feed = db_article_select_recent(timeframe, limit, order_by)
     return feed
 
@@ -134,22 +134,22 @@ async def content_article(article_id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-# from fastapi_utils.tasks import repeat_every
-# from update_deamon import SourceUpdater
+from fastapi_utils.tasks import repeat_every
+from update_deamon import SourceUpdater
 # import time
 
-# @api.on_event("startup")
-# @repeat_every(seconds=10, wait_first=2)
-# def periodic():
-#     # 1. Repeat every 10 seconds
-#     # 2. Check every source for avg_update_time * 20% distance from now
-#     # 3. Queue update
+@api.on_event("startup")
+@repeat_every(seconds=10, wait_first=2)
+def periodic():
+    # 1. Repeat every 10 seconds
+    # 2. Check every source for avg_update_time * 20% distance from now
+    # 3. Queue update
     
-#     sources = [src['id'] for src in db_source_full_list()]
+    sources = [src['id'] for src in db_source_full_list()]
 
-#     for src_id in sources:
-#         print("UPDATING ", src_id)
-#         src = SourceUpdater(src_id)
-#         src.setup()
-#         src.run()
+    for src_id in sources:
+        # print("UPDATING ", src_id)
+        src = SourceUpdater(src_id)
+        src.setup()
+        src.run()
 

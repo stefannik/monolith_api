@@ -82,7 +82,7 @@ def db_article_select_list(article_ids, order_by: Optional[str] = 'latest'):
     return articles
 
 
-def db_article_select_recent(timeframe, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
+def db_article_select_recent(timeframe: Optional[int] = 24, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
     last_n_hours = datetime.now() - timedelta(hours=timeframe)
     
     if order_by == 'relevance':
@@ -93,9 +93,17 @@ def db_article_select_recent(timeframe, limit: Optional[int] = 50, order_by: Opt
         articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.asc()).limit(limit)
     else:
         articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
+    
+    ready_articles = []
+    for art in articles:
+        data = art.__data__
+        sources = art.sources
+        data['source_id'] = sources[0].source_id
+        ready_articles.append(data)
 
-    return [article.__data__ for article in articles]
+    return ready_articles
 
+db_article_select_recent()
 
 def db_article_select(article_id):
     article = Article.get_by_id(article_id)
