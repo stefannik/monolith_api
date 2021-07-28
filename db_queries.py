@@ -30,8 +30,14 @@ def db_source_select(source_id):
 
 def db_source_articles(source_id, order_by: Optional[str] = 'latest'):
     src_data = Source.get_by_id(source_id).articles
-    articles = [t.article.__data__ for t in src_data]
-    
+    # articles = [t.article.__data__ for t in src_data]
+
+    articles = []
+    for art in src_data:
+        data = art.article.__data__
+        data['source_id'] = source_id
+        articles.append(data)
+
     if order_by == 'relevance':
         articles = sorted(articles, key=itemgetter('impact_score'))
     elif order_by == 'oldest':
