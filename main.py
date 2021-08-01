@@ -134,22 +134,22 @@ async def content_article(article_id):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-from fastapi_utils.tasks import repeat_every
-from update_deamon import SourceUpdater
-# import time
+# from fastapi_utils.tasks import repeat_every
+# from update_deamon import SourceUpdater
+# # import time
 
-@api.on_event("startup")
-@repeat_every(seconds=10, wait_first=2)
-def periodic():
-    # 1. Repeat every 10 seconds
-    # 2. Check every source for avg_update_time * 20% distance from now
-    # 3. Queue update
+# @api.on_event("startup")
+# @repeat_every(seconds=10)
+# def periodic():
+#     # 1. Repeat every 10 seconds
+#     # 2. Check every source for avg_update_time * 20% distance from now
+#     # 3. Queue update
     
-    sources = [src['id'] for src in db_source_full_list()]
+#     sources = [src['id'] for src in db_source_full_list()]
 
-    for src_id in sources:
-        # print("UPDATING ", src_id)
-        src = SourceUpdater(src_id)
-        src.setup()
-        src.run()
+#     for src_id in sources:
+#         # print("UPDATING ", src_id)
+#         src = SourceUpdater(src_id)
+#         src.setup()
+#         src.run()
 
