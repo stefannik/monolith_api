@@ -83,7 +83,7 @@ class SourceUpdater:
 
     def run(self):
         if (self.active and self.needs_update) or self.force:
-            print("UPDATING ", self.source_id)
+            # print("UPDATING ", self.source_id)
             self.add_new_articles()
             self.update_info()
             
