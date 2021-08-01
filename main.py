@@ -22,7 +22,7 @@ api.add_middleware(
 
 @api.get("/")
 async def root():
-    return {"message": "This is Monolith API v0.1.18"}
+    return {"message": "This is Monolith API v0.2.1"}
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
