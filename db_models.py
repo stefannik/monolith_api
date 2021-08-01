@@ -3,7 +3,8 @@ from pydantic import BaseModel, constr, validator
 from datetime import datetime
 from typing import Optional
 
-db = SqliteDatabase('database/database01_20210708.db')
+# db = SqliteDatabase('database/database01_20210708.db')
+db = SqliteDatabase('/home/monolith_db/database01_20210708.db')
 
 
 class Source(Model):
