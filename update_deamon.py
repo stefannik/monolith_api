@@ -102,7 +102,7 @@ def main_program():
 import daemon
 
 with daemon.DaemonContext(
-    working_directory='/home/stefan/Projects/monolith_api'
+    working_directory='/home/monolith_api'
 ):
         main_program()
 
