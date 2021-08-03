@@ -1,7 +1,7 @@
 import json
 from datetime import time, timedelta
 from datetime import datetime
-from db_queries import db_article_exists, db_article_insert, db_source_select, db_source_update, db_sourcearticle_insert, db_source_full_list, db_source_select_list
+from db_queries import db_source_full_list, db_article_exists, db_article_insert, db_source_select, db_source_update, db_sourcearticle_insert, db_source_full_list, db_source_select_list
 from rss_handler import RSSFeed
 from ai import score
 from peewee import IntegrityError
@@ -87,6 +87,25 @@ class SourceUpdater:
             self.add_new_articles()
             self.update_info()
             
+
+def main_program():
+    while True:
+        sources = [src['id'] for src in db_source_full_list()]
+        for src_id in sources:
+            src = SourceUpdater(src_id, True)
+            src.setup()
+            src.run()
+            with open('/home/stefan/Projects/monolith_api/update_deamon_logger.txt', 'a+') as fh:
+                fh.write("Updated Source: {}, at: {}\n".format(src_id, datetime.now()))
+        time.sleep(1)
+
+import daemon
+
+with daemon.DaemonContext(
+    working_directory='/home/stefan/Projects/monolith_api'
+):
+        main_program()
+
 
 
 # for src_id in range(1, 67):

@@ -113,7 +113,6 @@ def db_article_select_recent(timeframe: Optional[int] = 24, limit: Optional[int]
 
     return ready_articles
 
-db_article_select_recent()
 
 def db_article_select(article_id):
     article = Article.get_by_id(article_id)
