@@ -95,7 +95,7 @@ def main_program():
             src = SourceUpdater(src_id, True)
             src.setup()
             src.run()
-            with open('/home/stefan/Projects/monolith_api/update_deamon_logger.txt', 'a+') as fh:
+            with open('/home/monolith_api/update_deamon_logger.txt', 'a+') as fh:
                 fh.write("Updated Source: {}, at: {}\n".format(src_id, datetime.now()))
         time.sleep(1)
 
