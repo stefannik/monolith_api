@@ -99,14 +99,14 @@ def main_program():
                 fh.write("Updated Source: {}, at: {}\n".format(src_id, datetime.now()))
         time.sleep(1)
 
-import daemon
+# import daemon
 
-with daemon.DaemonContext(
-    working_directory='/home/monolith_api'
-):
-        main_program()
+# with daemon.DaemonContext(
+#     working_directory='/home/monolith_api'
+# ):
+#         main_program()
 
-
+main_program()
 
 # for src_id in range(1, 67):
 #     print("updating ", src_id)
