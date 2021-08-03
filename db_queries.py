@@ -91,14 +91,18 @@ def db_article_select_list(article_ids, order_by: Optional[str] = 'latest'):
 def db_article_select_recent(timeframe: Optional[int] = 24, limit: Optional[int] = 50, order_by: Optional[str] = 'relevance'):
     last_n_hours = datetime.now() - timedelta(hours=timeframe)
     
-    if order_by == 'relevance':
-        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.impact_score.desc()).limit(limit)
-    elif order_by == 'latest':
-        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
-    elif order_by == 'oldest':
-        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.asc()).limit(limit)
+    count = Article.select().where(Article.published > last_n_hours).count()
+    if count > 10:
+        if order_by == 'relevance':
+            articles = Article.select().where(Article.published > last_n_hours).order_by(Article.impact_score.desc()).limit(limit)
+        elif order_by == 'latest':
+            articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
+        elif order_by == 'oldest':
+            articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.asc()).limit(limit)
+        else:
+            articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
     else:
-        articles = Article.select().where(Article.published > last_n_hours).order_by(Article.published.desc()).limit(limit)
+        articles = Article.select().where(Article.published > 168).order_by(Article.impact_score.desc()).limit(limit) 
     
     ready_articles = []
     for art in articles:
